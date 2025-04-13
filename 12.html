@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Платформа для обслуговування ліфтів</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 5px;
+            background: #ffffff;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        function registerElevator() {
+            const id = document.getElementById("elevator-id").value;
+            const location = document.getElementById("elevator-location").value;
+            const email = document.getElementById("elevator-email").value;
+            if (id && location && email) {
+                let elevators = JSON.parse(localStorage.getItem("elevators")) || [];
+                elevators.push({ id, location, email });
+                localStorage.setItem("elevators", JSON.stringify(elevators));
+                alert("Ліфт зареєстровано!");
+                document.getElementById("elevator-id").value = "";
+                document.getElementById("elevator-location").value = "";
+                document.getElementById("elevator-email").value = "";
+            } else {
+                alert("Будь ласка, заповніть всі поля.");
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <h2>Реєстрація ліфта</h2>
+            <div class="form-group">
+                <label for="elevator-id">ID ліфта:</label>
+                <input type="text" id="elevator-id" placeholder="Введіть унікальний ID">
+            </div>
+            <div class="form-group">
+                <label for="elevator-location">Місцезнаходження:</label>
+                <input type="text" id="elevator-location" placeholder="Введіть адресу">
+            </div>
+            <div class="form-group">
+                <label for="elevator-email">Email клієнта:</label>
+                <input type="email" id="elevator-email" placeholder="Введіть email клієнта">
+            </div>
+            <button onclick="registerElevator()">Зареєструвати</button>
+            <a href="elevators.html">Переглянути зареєстровані ліфти</a>
+        </div>
+    </div>
+</body>
+</html>

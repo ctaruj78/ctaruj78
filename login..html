@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiftMaster Pro - Логін</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            background-color: #2c2c2c;
+            padding: 30px;
+            border-radius: 10px;
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .login-container h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .login-container input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background-color: #3c3c3c;
+            border: 1px solid #555;
+            color: #ffffff;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .login-container button {
+            padding: 12px 20px;
+            background-color: #007bff;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .login-container button:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: #ff4444;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        .success-message {
+            color: #28a745;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        .register-link {
+            margin-top: 15px;
+            display: block;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .register-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Вхід у LiftMaster Pro</h2>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Пароль" required>
+        <button onclick="login()">Увійти</button>
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+        <a href="register.html" class="register-link">Немає акаунта? Зареєструватися</a>
+    </div>
+
+    <script>
+        // Імітація бази користувачів (для тестування)
+        const users = [
+            { email: "admin@example.com", password: "admin123", role: "admin" },
+            { email: "client1@example.com", password: "client123", role: "client" },
+            { email: "tech1@example.com", password: "tech123", role: "technician" },
+            { email: "tech2@example.com", password: "tech123", role: "technician" }
+        ];
+
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        function validatePassword(password) {
+            return password.length >= 6;
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Валідація введених даних
+            if (!email || !password) {
+                showError('Будь ласка, заповніть усі поля!');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                showError('Невірний формат email!');
+                return;
+            }
+
+            if (!validatePassword(password)) {
+                showError('Пароль має бути не менше 6 символів!');
+                return;
+            }
+
+            // Імітація авторизації (поки без бекенду)
+            const user = users.find(u => u.email === email && u.password === password);
+            if (!user) {
+                showError('Невірний email або пароль!');
+                return;
+            }
+
+            // Успішний логін
+            showSuccess('Вхід успішний! Перенаправлення...');
+
+            // Зберігаємо користувача в localStorage
+            localStorage.setItem('user', JSON.stringify({ email: user.email, role: user.role }));
+
+            // Імітація отримання JWT-токена (для майбутнього бекенду)
+            // У реальному сценарії токен буде отриманий із сервера
+            const fakeToken = "fake-jwt-token";
+            localStorage.setItem('token', fakeToken);
+
+            // Перенаправлення на client.html через 1 секунду
+            setTimeout(() => {
+                window.location.href = 'client.html';
+            }, 1000);
+
+            // Код для реального бекенду (закоментований)
+            /*
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify({ email, role: data.role }));
+                    showSuccess('Вхід успішний! Перенаправлення...');
+                    setTimeout(() => {
+                        window.location.href = 'client.html';
+                    }, 1000);
+                } else {
+                    showError(data.error || 'Помилка авторизації!');
+                }
+            })
+            .catch(error => {
+                console.error('Помилка:', error);
+                showError('Помилка сервера. Спробуйте пізніше.');
+            });
+            */
+        }
+
+        // Додаємо обробник для Enter
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+    </script>
+</body>
+</html>
+

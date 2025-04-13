@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Технік - Перегляд заявок</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+        .container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .issue {
+            background-color: #444;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Мої заявки</h2>
+        <div class="issue">
+            <p>ID: 001</p>
+            <p>Опис: Проблема з принтером</p>
+            <p>Статус: Нова</p>
+            <button onclick="updateStatus('001')">Оновити статус</button>
+            <button onclick="openChat()">Чат з клієнтом</button>
+        </div>
+        <button onclick="viewCalendar()">Переглянути календар</button>
+    </div>
+
+    <script>
+        function updateStatus(id) {
+            alert(`Статус заявки ${id} оновлено!`);
+        }
+
+        function openChat() {
+            window.location.href = 'chat.html';
+        }
+
+        function viewCalendar() {
+            alert('Тут буде календар з графіком роботи.');
+        }
+    </script>
+</body>
+</html>

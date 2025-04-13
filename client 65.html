@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiftMaster Pro - Дашборд</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background-color: #1a1a1a; color: #ffffff; }
+        .sidebar { width: 250px; background-color: #2c2c2c; height: 100vh; position: fixed; padding: 20px; }
+        .sidebar a { display: block; color: #ffffff; padding: 10px; text-decoration: none; }
+        .sidebar a:hover { background-color: #007bff; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .notification { background-color: #ff4444; padding: 10px; margin: 10px 0; border-radius: 5px; animation: fadeIn 0.5s; }
+        .stats { display: flex; gap: 20px; margin: 20px 0; }
+        .stat-card { background-color: #2c2c2c; padding: 20px; border-radius: 5px; flex: 1; text-align: center; }
+        .new-lift-form, .edit-lift-form, .new-issue-form { background-color: #2c2c2c; padding: 20px; border-radius: 5px; display: none; animation: slideIn 0.3s ease-in-out; }
+        .new-lift-form input, .new-lift-form select, .edit-lift-form input, .edit-lift-form select, .new-issue-form input, .new-issue-form select { width: 100%; padding: 10px; margin: 5px 0; background-color: #3c3c3c; border: 1px solid #555; color: #ffffff; border-radius: 5px; }
+        .form-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        button { padding: 10px 20px; background-color: #007bff; border: none; color: #ffffff; cursor: pointer; border-radius: 5px; }
+        button:hover { background-color: #0056b3; }
+        .table-container { margin-top: 20px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background-color: #2c2c2c; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #444; }
+        th { cursor: pointer; }
+        .details-btn { background-color: #28a745; }
+        .edit-btn { background-color: #ffc107; color: #000; }
+        .delete-btn { background-color: #dc3545; }
+        .pagination { margin-top: 20px; display: flex; gap: 5px; }
+        .pagination button { background-color: #2c2c2c; }
+        .pagination button:hover { background-color: #007bff; }
+        .settings-section { background-color: #2c2c2c; padding: 20px; border-radius: 5px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>LiftMaster Pro</h2>
+        <a href="#" onclick="showDashboard()"><i class="fas fa-tachometer-alt"></i> Дашборд</a>
+        <a href="#" onclick="showLifts()" id="liftsMenu"><i class="fas fa-elevator"></i> Ліфти</a>
+        <a href="#" onclick="showClients()" id="clientsMenu"><i class="fas fa-users"></i> Клієнти</a>
+        <a href="#" onclick="showAnalytics()" id="analyticsMenu"><i class="fas fa-chart-line"></i> Аналітика</a>
+        <a href="qr-scanner.html" id="qrScannerMenu" style="display: none;"><i class="fas fa-qrcode"></i> QR Сканер</a>
+        <a href="#" onclick="showSettings()"><i class="fas fa-cog"></i> Налаштування</a>
+        <a href="#" onclick="logout()" style="position: absolute; bottom: 20px;"><i class="fas fa-sign-out-alt"></i> Вийти</a>
+    </div>
+
+    <div class="main-content" id="dashboard">
+        <div class="header">
+            <h1>Дашборд</h1>
+            <div>Роль: <span id="userRole"></span></div>
+        </div>
+
+        <div class="notification" id="urgentNotification" style="display: none;">
+            Увага! Є термінові заявки, які потребують вашої уваги.
+        </div>
+
+        <div class="stats" id="statsSection">
+            <div class="stat-card">
+                <h3>Активні ліфти</h3>
+                <p id="activeLifts">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Заявки на сьогодні</h3>
+                <p id="todayIssues">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Час рекламації (рік)</h3>
+                <p id="reclamationTime">0 год</p>
+            </div>
+        </div>
+
+        <button id="toggleNewLiftForm" class="toggle-form-btn" style="display: none;" onclick="toggleLiftForm()">
+            <i class="fas fa-plus"></i> Додати новий ліфт
+        </button>
+
+        <div class="new-lift-form" id="newLiftForm">
+            <h3>Додати новий ліфт</h3>
+            <input type="text" id="newLiftId" placeholder="ID ліфта (обов’язково)" required>
+            <input type="text" id="newLiftAddress" placeholder="Адреса (обов’язково)" required>
+            <input type="text" id="newLiftType" placeholder="Тип (наприклад, Пасажирський)">
+            <input type="text" id="newLiftBrand" placeholder="Марка (наприклад, Otis)">
+            <input type="date" id="newLiftInstallationDate" placeholder="Дата встановлення">
+            <input type="text" id="newLiftCapacity" placeholder="Вантажопідйомність (наприклад, 1000 кг)">
+            <select id="newLiftStatus" required>
+                <option value="Активний">Активний</option>
+                <option value="Поломка">Поломка</option>
+            </select>
+            <input type="email" id="newLiftOwner" placeholder="Email власника (опціонально)">
+            <div class="form-buttons">
+                <button onclick="addNewLift()">Додати</button>
+                <button onclick="toggleLiftForm()" class="hide-form-btn">Приховати</button>
+            </div>
+        </div>
+
+        <div class="edit-lift-form" id="editLiftForm" style="display: none;">
+            <h3>Редагувати ліфт</h3>
+            <input type="text" id="editLiftId" readonly>
+            <input type="text" id="editLiftAddress" placeholder="Адреса">
+            <input type="text" id="editLiftType" placeholder="Тип">
+            <input type="text" id="editLiftBrand" placeholder="Марка">
+            <input type="date" id="editLiftInstallationDate" placeholder="Дата встановлення">
+            <input type="text" id="editLiftCapacity" placeholder="Вантажопідйомність">
+            <select id="editLiftStatus">
+                <option value="Активний">Активний</option>
+                <option value="Поломка">Поломка</option>
+            </select>
+            <input type="date" id="editLiftLastMaintenance" placeholder="Останнє ТО">
+            <div class="form-buttons">
+                <button onclick="saveLiftEdit()">Зберегти</button>
+                <button onclick="hideEditForm()" class="hide-form-btn">Скасувати</button>
+            </div>
+        </div>
+
+        <div class="new-issue-form" id="newIssueForm" style="display: none;">
+            <h3>Нова заявка</h3>
+            <input type="text" id="newIssueLiftId" placeholder="ID ліфта">
+            <input type="text" id="newIssueDescription" placeholder="Опис проблеми">
+            <select id="newIssuePriority">
+                <option value="low">Низький</option>
+                <option value```html
+                <option value="medium">Середній</option>
+                <option value="high">Високий</option>
+            </select>
+            <div class="form-buttons">
+                <button onclick="submitNewIssue()">Надіслати</button>
+                <button onclick="hideIssueForm()">Приховати</button>
+            </div>
+        </div>
+
+        <div class="filter-search">
+            <input type="text" id="searchInput" placeholder="Пошук за ID, адресою, маркою..." onkeyup="filterLifts()">
+            <select id="statusFilter" onchange="filterLifts()">
+                <option value="all">Усі статуси</option>
+                <option value="active">Активний</option>
+                <option value="broken">Поломка</option>
+            </select>
+            <button onclick="exportToCSV()"><i class="fas fa-download"></i> Експорт у CSV</button>
+        </div>
+
+        <div class="table-container">
+            <table id="liftsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">ID <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(1)">Адреса <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(2)">Статус <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(3)">Останнє ТО <i class="fas fa-sort"></i></th>
+                        <th>Дії</th>
+                    </tr>
+                </thead>
+                <tbody id="liftsTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+
+        <div class="settings-section" id="settingsSection" style="display: none;">
+            <h2>Налаштування</h2>
+            <div class="setting-item">
+                <label for="languageSelect">Мова:</label>
+                <select id="languageSelect" onchange="changeLanguage()">
+                    <option value="uk">Українська</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="dateFormatSelect">Формат дати:</label>
+                <select id="dateFormatSelect" onchange="changeDateFormat()">
+                    <option value="DD.MM.YYYY">ДД.М-ММ.РРРР</option>
+                    <option value="MM/DD/YYYY">ММ/ДД/РРРР</option>
+                </select>
+            </div>
+            <button onclick="saveSettings()">Зберегти налаштування</button>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user')) || { role: 'admin', email: 'admin@example.com' };
+        let lifts = JSON.parse(localStorage.getItem('lifts')) || [
+            { id: "34", address: "вул. Перемоги, 12", type: "Пасажирський", brand: "Otis", installationDate: "2015-06-20", capacity: "1000 кг", status: "Поломка", lastMaintenance: "2025-03-13", owner: "client1@example.com" },
+            { id: "78", address: "пр. Миру, 45", type: "Пасажирський", brand: "KONE", installationDate: "2018-09-15", capacity: "800 кг", status: "Активний", lastMaintenance: "2025-03-29", owner: "client2@example.com" }
+        ];
+        let settings = JSON.parse(localStorage.getItem('settings')) || { language: 'uk', dateFormat: 'DD.MM.YYYY' };
+        let currentPage = 1;
+        const liftsPerPage = 10;
+        let sortColumn = -1;
+        let sortDirection = 1;
+
+        function setupRoleAccess() {
+            document.getElementById('userRole').textContent = user.role === 'admin' ? 'Адміністратор' : user.role === 'client' ? 'Клієнт' : 'Технік';
+            if (user.role === 'technician') {
+                document.getElementById('statsSection').style.display = 'none';
+                document.getElementById('clientsMenu').style.display = 'none';
+                document.getElementById('analyticsMenu').style.display = 'none';
+                document.getElementById('qrScannerMenu').style.display = 'block';
+                document.getElementById('toggleNewLiftForm').style.display = 'none';
+                document.getElementById('newIssueForm').style.display = 'block';
+            } else if (user.role === 'client') {
+                document.getElementById('clientsMenu').style.display = 'none';
+                document.getElementById('analyticsMenu').style.display = 'none';
+                document.getElementById('toggleNewLiftForm').style.display = 'none';
+                document.getElementById('newIssueForm').style.display = 'block';
+            } else if (user.role === 'admin') {
+                document.getElementById('toggleNewLiftForm').style.display = 'block';
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('settingsSection').style.display = 'none';
+            displayLifts();
+        }
+
+        function showSettings() {
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('settingsSection').style.display = 'block';
+            loadSettings();
+        }
+
+        function loadSettings() {
+            document.getElementById('languageSelect').value = settings.language;
+            document.getElementById('dateFormatSelect').value = settings.dateFormat;
+        }
+
+        function changeLanguage() {
+            settings.language = document.getElementById('languageSelect').value;
+        }
+
+        function changeDateFormat() {
+            settings.dateFormat = document.getElementById('dateFormatSelect').value;
+            displayLifts();
+        }
+
+        function saveSettings() {
+            localStorage.setItem('settings', JSON.stringify(settings));
+            alert('Налаштування збережено!');
+            displayLifts();
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Не вказано';
+            const date = new Date(dateStr);
+            return settings.dateFormat === 'MM/DD/YYYY'
+                ? `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear()}`
+                : `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
+        }
+
+        function toggleLiftForm() {
+            const form = document.getElementById('newLiftForm');
+            const toggleButton = document.getElementById('toggleNewLiftForm');
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
+            toggleButton.innerHTML = form.style.display === 'block'
+                ? '<i class="fas fa-minus"></i> Приховати форму'
+                : '<i class="fas fa-plus"></i> Додати новий ліфт';
+        }
+
+        function addNewLift() {
+            const id = document.getElementById('newLiftId').value.trim();
+            const address = document.getElementById('newLiftAddress').value.trim();
+            const type = document.getElementById('newLiftType').value.trim();
+            const brand = document.getElementById('newLiftBrand').value.trim();
+            const installationDate = document.getElementById('newLiftInstallationDate').value;
+            const capacity = document.getElementById('newLiftCapacity').value.trim();
+            const status = document.getElementById('newLiftStatus').value;
+            const owner = document.getElementById('newLiftOwner').value.trim() || '';
+
+            if (!id || !address) {
+                alert('ID та Адреса є обов’язковими!');
+                return;
+            }
+            if (lifts.some(lift => lift.id === id)) {
+                alert('Ліфт із таким ID уже існує!');
+                return;
+            }
+
+            lifts.push({ id, address, type, brand, installationDate, capacity, status, lastMaintenance: '', owner });
+            localStorage.setItem('lifts', JSON.stringify(lifts));
+            displayLifts();
+            toggleLiftForm();
+            document.querySelectorAll('#newLiftForm input, #newLiftForm select').forEach(el => el.value = '');
+        }
+
+        function editLift(liftId) {
+            const lift = lifts.find(l => l.id === liftId);
+            if (!lift) return;
+
+            document.getElementById('editLiftId').value = lift.id;
+            document.getElementById('editLiftAddress').value = lift.address;
+            document.getElementById('editLiftType').value = lift.type || '';
+            document.getElementById('editLiftBrand').value = lift.brand || '';
+            document.getElementById('editLiftInstallationDate').value = lift.installationDate || '';
+            document.getElementById('editLiftCapacity').value = lift.capacity || '';
+            document.getElementById('editLiftStatus').value = lift.status;
+            document.getElementById('editLiftLastMaintenance').value = lift.lastMaintenance || '';
+
+            document.getElementById('editLiftForm').style.display = 'block';
+        }
+
+        function saveLiftEdit() {
+            const id = document.getElementById('editLiftId').value;
+            const lift = lifts.find(l => l.id === id);
+            if (!lift) return;
+
+            lift.address = document.getElementById('editLiftAddress').value.trim();
+            lift.type = document.getElementById('editLiftType').value.trim();
+            lift.brand = document.getElementById('editLiftBrand').value.trim();
+            lift.installationDate = document.getElementById('editLiftInstallationDate').value;
+            lift.capacity = document.getElementById('editLiftCapacity').value.trim();
+            lift.status = document.getElementById('editLiftStatus').value;
+            lift.lastMaintenance = document.getElementById('editLiftLastMaintenance').value;
+
+            localStorage.setItem('lifts', JSON.stringify(lifts));
+            displayLifts();
+            hideEditForm();
+        }
+
+        function hideEditForm() {
+            document.getElementById('editLiftForm').style.display = 'none';
+        }
+
+        function submitNewIssue() {
+            const liftId = document.getElementById('newIssueLiftId').value.trim();
+            const description = document.getElementById('newIssueDescription').value.trim();
+            const priority = document.getElementById('newIssuePriority').value;
+
+            if (!liftId || !description) {
+                alert('Заповніть ID ліфта та опис проблеми!');
+                return;
+            }
+            if (!lifts.some(lift => lift.id === liftId)) {
+                alert('Ліфт із таким ID не знайдено!');
+                return;
+            }
+
+            alert(`Заявка створена: Ліфт ${liftId}, Опис: ${description}, Пріоритет: ${priority}`);
+            hideIssueForm();
+            document.querySelectorAll('#newIssueForm input, #newIssueForm select').forEach(el => el.value = '');
+        }
+
+        function hideIssueForm() {
+            document.getElementById('newIssueForm').style.display = 'none';
+        }
+
+        function displayLifts() {
+            const tableBody = document.getElementById('liftsTableBody');
+            tableBody.innerHTML = '';
+
+            let filteredLifts = filterLiftsData();
+            if (user.role === 'client') {
+                filteredLifts = filteredLifts.filter(lift => lift.owner === user.email);
+            }
+            const sortedLifts = sortLifts(filteredLifts);
+            const start = (currentPage - 1) * liftsPerPage;
+            const end = Math.min(start + liftsPerPage, sortedLifts.length);
+
+            for (let i = start; i < end; i++) {
+                const lift = sortedLifts[i];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${lift.id}</td>
+                    <td>${lift.address}</td>
+                    <td style="color: ${lift.status === 'Поломка' ? 'red' : 'green'}">${lift.status}</td>
+                    <td>${formatDate(lift.lastMaintenance)}</td>
+                    <td>
+                        <button class="details-btn" onclick="viewLiftDetails('${lift.id}')">Деталі</button>
+                        ${user.role === 'admin' || user.role === 'technician' ? `<button class="edit-btn" onclick="editLift('${lift.id}')">Редагувати</button>` : ''}
+                        ${user.role === 'admin' ? `<button class="delete-btn" onclick="deleteLift('${lift.id}')">Видалити</button>` : ''}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            }
+
+            updatePagination(filteredLifts.length);
+            updateStats();
+            checkUrgentIssues();
+        }
+
+        function filterLiftsData() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            return lifts.filter(lift =>
+                (lift.id.toLowerCase().includes(search) || lift.address.toLowerCase().includes(search) || lift.brand.toLowerCase().includes(search)) &&
+                (statusFilter === 'all' || (statusFilter === 'active' && lift.status === 'Активний') || (statusFilter === 'broken' && lift.status === 'Поломка'))
+            );
+        }
+
+        function sortLifts(lifts) {
+            if (sortColumn === -1) return lifts;
+            return [...lifts].sort((a, b) => {
+                const values = [a, b].map(lift => [lift.id, lift.address, lift.status, lift.lastMaintenance || ''][sortColumn]);
+                return values[0] > values[1] ? sortDirection : -sortDirection;
+            });
+        }
+
+        function sortTable(column) {
+            sortColumn = sortColumn === column ? column : column;
+            sortDirection = sortColumn === column ? -sortDirection : 1;
+            displayLifts();
+        }
+
+        function filterLifts() {
+            currentPage = 1;
+            displayLifts();
+        }
+
+        function updatePagination(totalLifts) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            const totalPages = Math.ceil(totalLifts / liftsPerPage);
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.onclick = () => { currentPage = i; displayLifts(); };
+                if (i === currentPage) button.style.backgroundColor = '#007bff';
+                pagination.appendChild(button);
+            }
+        }
+
+        function updateStats() {
+            const visibleLifts = user.role === 'client' ? lifts.filter(l => l.owner === user.email) : lifts;
+            document.getElementById('activeLifts').textContent = visibleLifts.filter(l => l.status === 'Активний').length;
+            document.getElementById('todayIssues').textContent = visibleLifts.filter(l => l.status === 'Поломка').length;
+            document.getElementById('reclamationTime').textContent = '2 год';
+        }
+
+        function viewLiftDetails(liftId) {
+            localStorage.setItem('selectedLiftId', liftId);
+            window.location.href = 'lift-details.html';
+        }
+
+        function deleteLift(liftId) {
+            if (confirm('Ви впевнені, що хочете видалити цей ліфт?')) {
+                lifts = lifts.filter(l => l.id !== liftId);
+                localStorage.setItem('lifts', JSON.stringify(lifts));
+                displayLifts();
+            }
+        }
+
+        function checkUrgentIssues() {
+            const visibleLifts = user.role === 'client' ? lifts.filter(l => l.owner === user.email) : lifts;
+            const hasIssues = visibleLifts.some(l => l.status === 'Поломка');
+            document.getElementById('urgentNotification').style.display = hasIssues ? 'block' : 'none';
+        }
+
+        function exportToCSV() {
+            const filteredLifts = filterLiftsData();
+            const csv = ['ID,Адреса,Статус,Останнє ТО'].concat(
+                filteredLifts.map(lift => `${lift.id},${lift.address},${lift.status},${formatDate(lift.lastMaintenance)}`)
+            ).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lifts.csv';
+            a.click();
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        // Ініціалізація
+        setupRoleAccess();
+        displayLifts();
+    </script>
+</body>
+</html>

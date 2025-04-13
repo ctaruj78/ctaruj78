@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизація</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Авторизація</h2>
+        <select id="role">
+            <option value="client">Клієнт</option>
+            <option value="technician">Технік</option>
+            <option value="admin">Адміністратор</option>
+        </select>
+        <input type="text" placeholder="Логін" id="username">
+        <input type="password" placeholder="Пароль" id="password">
+        <button onclick="login()">Увійти</button>
+    </div>
+
+    <script>
+        function login() {
+            const role = document.getElementById('role').value;
+            if (role === 'client') {
+                window.location.href = 'client.html';
+            } else if (role === 'technician') {
+                window.location.href = 'technician.html';
+            } else if (role === 'admin') {
+                window.location.href = 'admin.html';
+            }
+        }
+    </script>
+</body>
+</html>

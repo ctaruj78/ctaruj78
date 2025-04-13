@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Платформа для обслуговування ліфтів</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 5px;
+            background: #ffffff;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        .notification {
+            display: none;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 5px;
+            color: white;
+        }
+        .success { background-color: #28a745; }
+        .error { background-color: #dc3545; }
+        .elevators-list {
+            margin-top: 20px;
+        }
+        .elevator-item {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Реєстрація ліфта -->
+        <div class="section">
+            <h2>Реєстрація ліфта</h2>
+            <div class="form-group">
+                <label for="elevator-id">ID ліфта:</label>
+                <input type="text" id="elevator-id" placeholder="Введіть унікальний ID">
+            </div>
+            <div class="form-group">
+                <label for="elevator-location">Місцезнаходження:</label>
+                <input type="text" id="elevator-location" placeholder="Введіть адресу">
+            </div>
+            <button onclick="registerElevator()">Зареєструвати</button>
+            <div id="elevator-notification" class="notification"></div>
+            <div class="elevators-list" id="elevators-list"></div>
+        </div>
+
+        <!-- Реєстрація поломки -->
+        <div class="section">
+            <h2>Реєстрація поломки</h2>
+            <div class="form-group">
+                <label for="breakdown-elevator">ID ліфта:</label>
+                <div class="input-container">
+                    <input type="text" id="liftId" placeholder="Введіть ID ліфта">
+                    <button onclick="scanQRCode()">📷</button>
+                </div>
+            </div>
+            <div id="qr-reader" style="display: none;"></div>
+            <div class="form-group">
+                <label for="breakdown-desc">Опис поломки:</label>
+                <textarea id="breakdown-desc" placeholder="Опишіть проблему"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="priority">Пріоритет:</label>
+                <select id="priority">
+                    <option value="low">Низький</option>
+                    <option value="medium">Середній</option>
+                    <option value="high">Високий</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="difficulty">Рівень складності:</label>
+                <select id="difficulty">
+                    <option value="easy">Легкий</option>
+                    <option value="medium">Середній</option>
+                    <option value="hard">Складний</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="breakdown-photo">Додати фото:</label>
+                <input type="file" id="breakdown-photo" accept="image/*">
+            </div>
+            <button onclick="registerBreakdown()">Зареєструвати поломку</button>
+            <div id="breakdown-notification" class="notification"></div>
+        </div>
+
+        <!-- Кошторис поломки -->
+        <div class="section">
+            <h2>Кошторис поломки</h2>
+            <div class="form-group">
+                <label for="cost-elevator">ID ліфта:</label>
+                <input type="text" id="cost-elevator" placeholder="Введіть ID ліфта">
+            </div>
+            <div class="form-group">
+                <label for="cost-amount">Сума (грн):</label>
+                <input type="number" id="cost-amount" placeholder="Введіть суму">
+            </div>
+            <button onclick="saveCost()">Зберегти кошторис</button>
+            <div id="cost-notification" class="notification"></div>
+        </div>
+
+        <!-- Генерування звіту -->
+        <div class="section">
+            <h2>Генерування звіту</h2>
+            <div class="form-group">
+                <label for="report-elevator">ID ліфта:</label>
+                <input type="text" id="report-elevator" placeholder="Введіть ID ліфта">
+            </div>
+            <button onclick="generateReport()">Згенерувати звіт</button>
+            <div id="report-notification" class="notification"></div>
+        </div>
+    </div>
+
+    <script>
+        let elevators = JSON.parse(localStorage.getItem('elevators')) || [];
+
+        // Оновлення списку ліфтів
+        function updateElevatorsList() {
+            const list = document.getElementById('elevators-list');
+            list.innerHTML = '';
+            elevators.forEach((elevator, index) => {
+                const item = document.createElement('div');
+                item.className = 'elevator-item';
+                item.innerHTML = `${elevator.id} - ${elevator.location} <button onclick="deleteElevator(${index})">Видалити</button>`;
+                list.appendChild(item);
+            });
+        }
+
+        // Реєстрація ліфта
+        function registerElevator() {
+            const id = document.getElementById('elevator-id').value;
+            const location = document.getElementById('elevator-location').value;
+            const notification = document.getElementById('elevator-notification');
+
+            if (!id || !location) {
+                showNotification(notification, 'error', 'Заповніть усі поля!');
+                return;
+            }
+
+            elevators.push({ id, location });
+            localStorage.setItem('elevators', JSON.stringify(elevators));
+            showNotification(notification, 'success', 'Ліфт зареєстровано!');
+            updateElevatorsList();
+            document.getElementById('elevator-id').value = '';
+            document.getElementById('elevator-location').value = '';
+        }
+
+        // Видалення ліфта
+        function deleteElevator(index) {
+            elevators.splice(index, 1);
+            localStorage.setItem('elevators', JSON.stringify(elevators));
+            updateElevatorsList();
+        }
+
+        // Сканування QR-коду
+        function scanQRCode() {
+            const qrReader = new Html5Qrcode("qr-reader");
+            document.getElementById("qr-reader").style.display = "block";
+            qrReader.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                qrMessage => {
+                    document.getElementById("liftId").value = qrMessage;
+                    qrReader.stop();
+                    document.getElementById("qr-reader").style.display = "none";
+                    showNotification(document.getElementById('breakdown-notification'), 'success', 'QR-код успішно відскановано!');
+                },
+                errorMessage => {
+                    console.warn(errorMessage);
+                    showNotification(document.getElementById('breakdown-notification'), 'error', 'Помилка сканування QR-коду.');
+                }
+            );
+        }
+
+        // Реєстрація поломки
+        function registerBreakdown() {
+            const id = document.getElementById('liftId').value;
+            const desc = document.getElementById('breakdown-desc').value;
+            const notification = document.getElementById('breakdown-notification');
+
+            if (!id || !desc) {
+                showNotification(notification, 'error', 'Заповніть ID ліфта та опис!');
+                return;
+            }
+
+            showNotification(notification, 'success', 'Поломку зареєстровано!');
+        }
+
+        // Збереження кошторису
+        function saveCost() {
+            const id = document.getElementById('cost-elevator').value;
+            const amount = document.getElementById('cost-amount').value;
+            const notification = document.getElementById('cost-notification');
+
+            if (!id || !amount) {
+                showNotification(notification, 'error', 'Заповніть усі поля!');
+                return;
+            }
+
+            showNotification(notification, 'success', 'Кошторис збережено!');
+        }
+
+        // Генерування звіту
+        function generateReport() {
+            const id = document.getElementById('report-elevator').value;
+            const notification = document.getElementById……

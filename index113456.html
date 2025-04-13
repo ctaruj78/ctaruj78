@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LiftMaster Pro - Тест</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" defer></script>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>LiftMaster Pro</h2>
+    <ul>
+      <li class="active">Дашборд</li>
+      <li>Ліфти</li>
+      <li>Завдання</li>
+      <li>Аналітика</li>
+    </ul>
+  </div>
+
+  <div class="main">
+    <div class="top-bar">
+      <div class="user-role">
+        Роль: <select>
+          <option>Адміністратор</option>
+          <option>Технік</option>
+          <option>Клієнт</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="card">Активні ліфти: <strong>125</strong></div>
+      <div class="card">Завдання на сьогодні: <strong>8</strong></div>
+      <div class="card">Час реакції: <strong>2 год</strong></div>
+    </div>
+
+    <div class="filters">
+      <input type="text" placeholder="Пошук за адресою або ID..." />
+      <select>
+        <option>Усі статуси</option>
+        <option>Активні</option>
+        <option>Не працює</option>
+      </select>
+      <button>Фільтрувати</button>
+    </div>
+
+    <div class="table-section">
+      <h2>Таблиця ліфтів</h2>
+      <table id="liftsTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Адреса</th>
+            <th>Статус</th>
+            <th>Останнє ТО</th>
+            <th>Дії</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>34</td>
+            <td>вул. Шевченка, 12</td>
+            <td><span class="status red">Помилка</span></td>
+            <td>2025-03-12</td>
+            <td><button>Деталі</button></td>
+          </tr>
+          <tr>
+            <td>78</td>
+            <td>пр. Миру, 45</td>
+            <td><span class="status green">Активний</span></td>
+            <td>2025-03-29</td>
+            <td><button>Деталі</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="map-container">
+      <h2>Мапа</h2>
+      <div id="map" style="height: 300px;"></div>
+    </div>
+
+    <div class="photo-section">
+      <h2>Фото до/після ремонту</h2>
+      <label>Фото ДО:
+        <input type="file" accept="image/*" id="beforePhoto" />
+        <img id="previewBefore" />
+      </label>
+      <label>Фото ПІСЛЯ:
+        <input type="file" accept="image/*" id="afterPhoto" />
+        <img id="previewAfter" />
+      </label>
+    </div>
+
+    <div class="chat-section">
+      <h2>Чат</h2>
+      <input type="text" id="chatSearch" placeholder="Пошук..." />
+      <div id="chatBox"></div>
+      <input type="text" id="chatInput" placeholder="Напишіть повідомлення..." />
+      <button id="sendBtn">Надіслати</button>
+    </div>
+  </div>
+
+  <script src="scripts.js"></script>
+</body>
+</html>

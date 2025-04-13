@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Клієнт - Реєстрація поломки</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: block;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input, select {
+            background-color: #444;
+            color: white;
+        }
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+            background-color: #444;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .notification {
+            background-color: #28a745;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: none;
+            text-align: center;
+        }
+        #video, #canvas {
+            display: none;
+            width: 100%;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        #canvas {
+            display: none;
+        }
+        .sos-button {
+            background-color: #ff0000;
+            font-weight: bold;
+        }
+        .sos-button:hover {
+            background-color: #cc0000;
+        }
+        .ai-prediction, .lift-details, .history-section, .inspection-section {
+            background-color: #555;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .lift-details p, .history-section p, .inspection-section p {
+            margin: 5px 0;
+        }
+        .inspection-section a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .inspection-section a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Реєстрація поломки</h2>
+        <label>ID ліфта (авто):</label>
+        <input type="text" id="liftId" placeholder="Введіть ID ліфта вручну" onblur="fetchLiftDetails()">
+        <button onclick="startScanner()">Сканувати QR-код</button>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+
+        <!-- Блок із деталями ліфта -->
+        <div class="lift-details" id="liftDetails" style="display: none;">
+            <h3>Інформація про ліфт</h3>
+            <p><strong>Модель:</strong> <span id="liftModel"></span></p>
+            <p><strong>Рік випуску:</strong> <span id="liftYear"></span></p>
+            <p><strong>Адреса:</strong> <span id="liftAddress"></span></p>
+            <p><strong>Вантажопідйомність:</strong> <span id="liftCapacity"></span></p>
+            <p><strong>Швидкість:</strong> <span id="liftSpeed"></span></p>
+            <p><strong>Статус:</strong> <span id="liftStatus"></span></p>
+        </div>
+
+        <!-- Блок із історією поломок -->
+        <div class="history-section" id="liftHistory" style="display: none;">
+            <h3>Історія поломок</h3>
+            <div id="historyList"></div>
+        </div>
+
+        <!-- Блок із інспекціями -->
+        <div class="inspection-section" id="liftInspections" style="display: none;">
+            <h3>Останні інспекції</h3>
+            <div id="inspectionList"></div>
+        </div>
+
+        <!-- AI-прогноз -->
+        <div class="ai-prediction" id="aiPrediction" style="display: none;">
+            AI-прогноз: Ліфт ID123 має 80% ймовірність поломки дверей через 2 місяці.
+        </div>
+
+        <label>Опис поломки:</label>
+        <input type="text" id="description" placeholder="Опишіть проблему">
+        <label>Пріоритет:</label>
+        <select id="priority">
+            <option value="low">Низький</option>
+            <option value="medium">Середній</option>
+            <option value="high">Високий</option>
+        </select>
+        <label>Рівень складності:</label>
+        <select id="complexity">
+            <option value="easy">Легкий</option>
+            <option value="medium">Середній</option>
+            <option value="hard">Складний</option>
+        </select>
+        <label>Вибір файлу:</label>
+        <input type="file" id="photo" accept="image/*">
+        <button onclick="submitIssue()">Зареєструвати поломку</button>
+        <div class="notification" id="notification">Заявка успішно створена!</div>
+        <button onclick="viewIssues()">Переглянути мої заявки</button>
+        <button onclick="openChat()">Чат з техніком</button>
+        <button class="sos-button" onclick="sosAlert()">SOS: Я застряг у ліфті!</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        let video = document.getElementById("video");
+        let canvasElement = document.getElementById("canvas");
+        let canvas = canvasElement.getContext("2d");
+        let liftIdInput = document.getElementById("liftId");
+        let scanning = false;
+
+        // Імітація бази даних ліфтів
+        const liftDatabase = {
+            "LIFT123": {
+                model: "Otis Gen2",
+                year: "2018",
+                address: "вул. Центральна, 10, Київ",
+                capacity: "1000 кг",
+                speed: "1.5 м/с",
+                status: "Працює",
+                history: [
+                    { date: "15.03.2025", description: "Двері не зачиняються", status: "Вирішено" },
+                    { date: "10.01.2025", description: "Аварійна зупинка", status: "Вирішено" }
+                ],
+                inspections: [
+                    { date: "01.02.2025", result: "Пройдено", reportUrl: "#" },
+                    { date: "15.11.2024", result: "Потрібен ремонт", reportUrl: "#" }
+                ]
+            }
+        };
+
+        function startScanner() {
+            if (scanning) {
+                stopScanner();
+                return;
+            }
+
+            scanning = true;
+            video.style.display = "block";
+            document.querySelector("button[onclick='startScanner()']").textContent = "Зупинити сканування";
+
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.setAttribute("playsinline", true);
+                    video.play();
+                    requestAnimationFrame(tick);
+                })
+                .catch(function(err) {
+                    alert("Помилка доступу до камери: " + err);
+                    stopScanner();
+                });
+        }
+
+        function stopScanner() {
+            scanning = false;
+            video.style.display = "none";
+            document.querySelector("button[onclick='startScanner()']").textContent = "Сканувати QR-код";
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function tick() {
+            if (!scanning) return;
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvasElement.height = video.videoHeight;
+                canvasElement.width = video.videoWidth;
+                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                let imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                let code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+
+                if (code) {
+                    liftIdInput.value = code.data;
+                    stopScanner();
+                    fetchLiftDetails();
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+
+        function fetchLiftDetails() {
+            const liftId = document.getElementById('liftId').value;
+            const liftData = liftDatabase[liftId];
+
+            if (liftData) {
+                // Відображення деталей ліфта
+                document.getElementById('liftDetails').style.display = 'block';
+                document.getElementById('liftModel').textContent = liftData.model;
+                document.getElementById('liftYear').textContent = liftData.year;
+                document.getElementById('liftAddress').textContent = liftData.address;
+                document.getElementById('liftCapacity').textContent = liftData.capacity;
+                document.getElementById('liftSpeed').textContent = liftData.speed;
+                document.getElementById('liftStatus').textContent = liftData.status;
+
+                // Відображення історії поломок
+                document.getElementById('liftHistory').style.display = 'block';
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = '';
+                liftData.history.forEach(item => {
+                    historyList.innerHTML += `<p>${item.date}: ${item.description} (${item.status})</p>`;
+                });
+
+                // Відображення інспекцій
+                document.getElementById('liftInspections').style.display = 'block';
+                const inspectionList = document.getElementById('inspectionList');
+                inspectionList.innerHTML = '';
+                liftData.inspections.forEach(item => {
+                    inspectionList.innerHTML += `<p>${item.date}: ${item.result} <a href="${item.reportUrl}" target="_blank">[Завантажити звіт]</a></p>`;
+                });
+
+                // Імітація AI-прогнозу
+                document.getElementById('aiPrediction').style.display = 'block';
+            } else {
+                alert("Ліфт із таким ID не знайдено.");
+                document.getElementById('liftDetails').style.display = 'none';
+                document.getElementById('liftHistory').style.display = 'none';
+                document.getElementById('liftInspections').style.display = 'none';
+                document.getElementById('aiPrediction').style.display = 'none';
+            }
+        }
+
+        function submitIssue() {
+            const liftId = document.getElementById('liftId').value;
+            const description = document.getElementById('description').value;
+
+            if (liftId && description) {
+                document.getElementById('notification').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('notification').style.display = 'none';
+                }, 3000);
+            } else {
+                alert("Будь ласка, заповніть ID ліфта та опис поломки.");
+            }
+        }
+
+        function viewIssues() {
+            window.location.href = 'issues.html';
+        }
+
+        function openChat() {
+            window.location.href = 'chat.html';
+        }
+
+        function sosAlert() {
+            alert("Термінова заявка створена! Найближчий технік уже в дорозі.");
+            document.getElementById('notification').textContent = "SOS: Технік прибуває!";
+            document.getElementById('notification').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('notification').style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

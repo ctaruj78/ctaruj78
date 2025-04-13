@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мої заявки</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+        .container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .issue {
+            background-color: #444;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Мої заявки</h2>
+        <div id="issuesList"></div>
+        <button onclick="window.location.href='client.html'">Назад</button>
+    </div>
+
+    <script>
+        // Імітація бази даних ліфтів (дублюємо для демонстрації)
+        const liftDatabase = {
+            "LIFT123": {
+                history: [
+                    { date: "15.03.2025", description: "Двері не зачиняються", status: "Вирішено" },
+                    { date: "10.01.2025", description: "Аварійна зупинка", status: "Вирішено" }
+                ]
+            }
+        };
+
+        // Отримання ID ліфта з localStorage
+        const liftId = localStorage.getItem('currentLiftId') || "LIFT123";
+        const issuesList = document.getElementById('issuesList');
+
+        if (liftDatabase[liftId] && liftDatabase[liftId].history) {
+            liftDatabase[liftId].history.forEach(item => {
+                issuesList.innerHTML += `
+                    <div class="issue">
+                        <p>Дата: ${item.date}</p>
+                        <p>Опис: ${item.description}</p>
+                        <p>Статус: ${item.status}</p>
+                    </div>
+                `;
+            });
+        } else {
+            issuesList.innerHTML = '<p>Заявки відсутні.</p>';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Клієнт - Реєстрація поломки</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        h2, h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h3 {
+            font-size: 18px;
+        }
+        label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: block;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input, select {
+            background-color: #444;
+            color: white;
+        }
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+            background-color: #444;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .notification {
+            background-color: #28a745;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: none;
+            text-align: center;
+        }
+        #video, #canvas {
+            display: none;
+            width: 100%;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        #canvas {
+            display: none;
+        }
+        .sos-button {
+            background-color: #ff0000;
+            font-weight: bold;
+        }
+        .sos-button:hover {
+            background-color: #cc0000;
+        }
+        .ai-prediction, .lift-details, .history-section, .inspection-section, .iot-status {
+            background-color: #555;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .lift-details p, .history-section p, .inspection-section p, .iot-status p {
+            margin: 5px 0;
+        }
+        .inspection-section a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .inspection-section a:hover {
+            text-decoration: underline;
+        }
+        .language-switcher {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .rating-section {
+            margin: 10px 0;
+        }
+        .rating-section select {
+            width: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="language-switcher">
+        <select id="language" onchange="changeLanguage()">
+            <option value="uk">Українська</option>
+            <option value="en">English</option>
+            <option value="ru">Русский</option>
+        </select>
+    </div>
+
+    <div class="container" id="registerContainer" style="display: none;">
+        <h2 data-lang="register-title">Реєстрація</h2>
+        <label data-lang="username">Ім’я користувача:</label>
+        <input type="text" id="regUsername" placeholder="Введіть ім’я користувача">
+        <label data-lang="password">Пароль:</label>
+        <input type="password" id="regPassword" placeholder="Введіть пароль">
+        <button onclick="register()">Зареєструватися</button>
+        <button onclick="showLogin()" style="background-color: #666;">Увійти</button>
+    </div>
+
+    <div class="container" id="loginContainer">
+        <h2 data-lang="login-title">Вхід</h2>
+        <label data-lang="username">Ім’я користувача:</label>
+        <input type="text" id="username" placeholder="Введіть ім’я користувача">
+        <label data-lang="password">Пароль:</label>
+        <input type="password" id="password" placeholder="Введіть пароль">
+        <button onclick="login()">Увійти</button>
+        <button onclick="showRegister()" style="background-color: #666;">Зареєструватися</button>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none;">
+        <h2 data-lang="register-issue">Реєстрація поломки</h2>
+        <button onclick="openDashboard()" style="background-color: #666;" data-lang="dashboard">Мій кабінет</button>
+        <label data-lang="lift-id">ID ліфта (авто):</label>
+        <input type="text" id="liftId" placeholder="Введіть ID ліфта вручну" onblur="fetchLiftDetails()">
+        <button onclick="startScanner()" data-lang="scan-qr">Сканувати QR-код</button>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+
+        <!-- Статус ліфта (імітація IoT) -->
+        <div class="iot-status" id="iotStatus" style="display: none;">
+            <p><strong data-lang="iot-status">Статус ліфта (IoT):</strong> <span id="iotStatusText"></span></p>
+        </div>
+
+        <!-- Деталі ліфта -->
+        <div class="lift-details" id="liftDetails" style="display: none;">
+            <h3 data-lang="lift-info">Інформація про ліфт</h3>
+            <p><strong data-lang="model">Модель:</strong> <span id="liftModel"></span></p>
+            <p><strong data-lang="year">Рік випуску:</strong> <span id="liftYear"></span></p>
+            <p><strong data-lang="address">Адреса:</strong> <span id="liftAddress"></span></p>
+            <p><strong data-lang="capacity">Вантажопідйомність:</strong> <span id="liftCapacity"></span></p>
+            <p><strong data-lang="speed">Швидкість:</strong> <span id="liftSpeed"></span></p>
+            <p><strong data-lang="status">Статус:</strong> <span id="liftStatus"></span></p>
+            <p><strong data-lang="manufacturer">Виробник:</strong> <span id="liftManufacturer"></span></p>
+            <p><strong data-lang="last-maintenance">Дата останнього ТО:</strong> <span id="liftLastMaintenance"></span></p>
+        </div>
+
+        <!-- Історія поломок -->
+        <div class="history-section" id="liftHistory" style="display: none;">
+            <h3 data-lang="history">Історія поломок</h3>
+            <select id="historyFilter" onchange="filterHistory()">
+                <option value="all" data-lang="filter-all">Усі</option>
+                <option value="new" data-lang="filter-new">Нові</option>
+                <option value="resolved" data-lang="filter-resolved">Вирішені</option>
+                <option value="urgent" data-lang="filter-urgent">Термінові</option>
+            </select>
+            <div id="historyList"></div>
+        </div>
+
+        <!-- Останні інспекції -->
+        <div class="inspection-section" id="liftInspections" style="display: none;">
+            <h3 data-lang="inspections">Останні інспекції</h3>
+            <div id="inspectionList"></div>
+        </div>
+
+        <!-- AI-прогноз -->
+        <div class="ai-prediction" id="aiPrediction" style="display: none;">
+            <span data-lang="ai-prediction"></span> <span id="aiPredictionText"></span>
+        </div>
+
+        <label data-lang="description">Опис поломки:</label>
+        <input type="text" id="description" placeholder="Опишіть проблему">
+        <label data-lang="priority">Пріоритет:</label>
+        <select id="priority">
+            <option value="low" data-lang="priority-low">Низький</option>
+            <option value="medium" data-lang="priority-medium">Середній</option>
+            <option value="high" data-lang="priority-high">Високий</option>
+        </select>
+        <label data-lang="complexity">Рівень складності:</label>
+        <select id="complexity">
+            <option value="easy" data-lang="complexity-easy">Легкий</option>
+            <option value="medium" data-lang="complexity-medium">Середній</option>
+            <option value="hard" data-lang="complexity-hard">Складний</option>
+        </select>
+        <label data-lang="attach-file">Вибір файлу:</label>
+        <input type="file" id="photo" accept="image/*">
+        <button onclick="submitIssue()" data-lang="submit-issue">Зареєструвати поломку</button>
+        <div class="notification" id="notification"></div>
+
+        <!-- Оцінка техніка -->
+        <div class="rating-section" id="ratingSection" style="display: none;">
+            <label data-lang="rate-technician">Оцініть роботу техніка:</label>
+            <select id="technicianRating">
+                <option value="5">5 зірок</option>
+                <option value="4">4 зірки</option>
+                <option value="3">3 зірки</option>
+                <option value="2">2 зірки</option>
+                <option value="1">1 зірка</option>
+            </select>
+            <label>Коментар:</label>
+            <input type="text" id="ratingComment" placeholder="Ваш коментар">
+            <button onclick="submitRating()" data-lang="submit-rating">Надіслати оцінку</button>
+        </div>
+
+        <button onclick="viewIssues()" data-lang="view-issues">Переглянути мої заявки</button>
+        <button onclick="openChat()" data-lang="chat">Чат з техніком</button>
+        <button class="sos-button" onclick="sosAlert()" data-lang="sos">SOS: Я застряг у ліфті!</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        // Багатомовність
+        const translations = {
+            uk: {
+                "register-title": "Реєстрація",
+                "login-title": "Вхід",
+                "username": "Ім’я користувача:",
+                "password": "Пароль:",
+                "invalid-login": "Невірне ім’я користувача або пароль",
+                "register-success": "Реєстрація успішна! Тепер увійдіть.",
+                "register-issue": "Реєстрація поломки",
+                "dashboard": "Мій кабінет",
+                "lift-id": "ID ліфта (авто):",
+                "scan-qr": "Сканувати QR-код",
+                "iot-status": "Статус ліфта (IoT):",
+                "lift-info": "Інформація про ліфт",
+                "model": "Модель:",
+                "year": "Рік випуску:",
+                "address": "Адреса:",
+                "capacity": "Вантажопідйомність:",
+                "speed": "Швидкість:",
+                "status": "Статус:",
+                "manufacturer": "Виробник:",
+                "last-maintenance": "Дата останнього ТО:",
+                "history": "Історія поломок",
+                "filter-all": "Усі",
+                "filter-new": "Нові",
+                "filter-resolved": "Вирішені",
+                "filter-urgent": "Термінові",
+                "inspections": "Останні інспекції",
+                "ai-prediction": "AI-прогноз:",
+                "description": "Опис поломки:",
+                "priority": "Пріоритет:",
+                "priority-low": "Низький",
+                "priority-medium": "Середній",
+                "priority-high": "Високий",
+                "complexity": "Рівень складності:",
+                "complexity-easy": "Легкий",
+                "complexity-medium": "Середній",
+                "complexity-hard": "Складний",
+                "attach-file": "Вибір файлу:",
+                "submit-issue": "Зареєструвати поломку",
+                "rate-technician": "Оцініть роботу техніка:",
+                "submit-rating": "Надіслати оцінку",
+                "view-issues": "Переглянути мої заявки",
+                "chat": "Чат з техніком",
+                "sos": "SOS: Я застряг у ліфті!"
+            },
+            en: {
+                "register-title": "Register",
+                "login-title": "Login",
+                "username": "Username:",
+                "password": "Password:",
+                "invalid-login": "Invalid username or password",
+                "register-success": "Registration successful! Now log in.",
+                "register-issue": "Register an Issue",
+                "dashboard": "My Dashboard",
+                "lift-id": "Lift ID (auto):",
+                "scan-qr": "Scan QR Code",
+                "iot-status": "Lift Status (IoT):",
+                "lift-info": "Lift Information",
+                "model": "Model:",
+                "year": "Year of Manufacture:",
+                "address": "Address:",
+                "capacity": "Capacity:",
+                "speed": "Speed:",
+                "status": "Status:",
+                "manufacturer": "Manufacturer:",
+                "last-maintenance": "Last Maintenance Date:",
+                "history": "Issue History",
+                "filter-all": "All",
+                "filter-new": "New",
+                "filter-resolved": "Resolved",
+                "filter-urgent": "Urgent",
+                "inspections": "Recent Inspections",
+                "ai-prediction": "AI Prediction:",
+                "description": "Issue Description:",
+                "priority": "Priority:",
+                "priority-low": "Low",
+                "priority-medium": "Medium",
+                "priority-high": "High",
+                "complexity": "Complexity Level:",
+                "complexity-easy": "Easy",
+                "complexity-medium": "Medium",
+                "complexity-hard": "Hard",
+                "attach-file": "Attach File:",
+                "submit-issue": "Register Issue",
+                "rate-technician": "Rate the Technician:",
+                "submit-rating": "Submit Rating",
+                "view-issues": "View My Issues",
+                "chat": "Chat with Technician",
+                "sos": "SOS: I’m Stuck in the Lift!"
+            },
+            ru: {
+                "register-title": "Регистрация",
+                "login-title": "Вход",
+                "username": "Имя пользователя:",
+                "password": "Пароль:",
+                "invalid-login": "Неверное имя пользователя или пароль",
+                "register-success": "Регистрация успешна! Теперь войдите.",
+                "register-issue": "Регистрация поломки",
+                "dashboard": "Мой кабинет",
+                "lift-id": "ID лифта (авто):",
+                "scan-qr": "Сканировать QR-код",
+                "iot-status": "Статус лифта (IoT):",
+                "lift-info": "Информация о лифте",
+                "model": "Модель:",
+                "year": "Год выпуска:",
+                "address": "Адрес:",
+                "capacity": "Грузоподъемность:",
+                "speed": "Скорость:",
+                "status": "Статус:",
+                "manufacturer": "Производитель:",
+                "last-maintenance": "Дата последнего ТО:",
+                "history": "История поломок",
+                "filter-all": "Все",
+                "filter-new": "Новые",
+                "filter-resolved": "Решенные",
+                "filter-urgent": "Срочные",
+                "inspections": "Последние инспекции",
+                "ai-prediction": "AI-прогноз:",
+                "description": "Описание поломки:",
+                "priority": "Приоритет:",
+                "priority-low": "Низкий",
+                "priority-medium": "Средний",
+                "priority-high": "Высокий",
+                "complexity": "Уровень сложности:",
+                "complexity-easy": "Легкий",
+                "complexity-medium": "Средний",
+                "complexity-hard": "Сложный",
+                "attach-file": "Выбор файла:",
+                "submit-issue": "Зарегистрировать поломку",
+                "rate-technician": "Оцените работу техника:",
+                "submit-rating": "Отправить оценку",
+                "view-issues": "Посмотреть мои заявки",
+                "chat": "Чат с техником",
+                "sos": "SOS: Я застрял в лифте!"
+            }
+        };
+
+        let currentLang = 'uk';
+
+        function changeLanguage() {
+            currentLang = document.getElementById('language').value;
+            document.querySelectorAll('[data-lang]').forEach(element => {
+                const key = element.getAttribute('data-lang');
+                element.textContent = translations[currentLang][key] || element.textContent;
+            });
+        }
+
+        function showRegister() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('registerContainer').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('registerContainer').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'block';
+        }
+
+        function register() {
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+
+            if (username && password) {
+                localStorage.setItem('username', username);
+                localStorage.setItem('password', password);
+                alert(translations[currentLang]['register-success'] || 'Реєстрація успішна! Тепер увійдіть.');
+                showLogin();
+            } else {
+                alert('Будь ласка, заповніть усі поля.');
+            }
+        }
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const storedUsername = localStorage.getItem('username');
+            const storedPassword = localStorage.getItem('password');
+
+            if (username === storedUsername && password === storedPassword) {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+            } else {
+                alert(translations[currentLang]['invalid-login'] || 'Невірне ім’я користувача або пароль');
+            }
+        }
+
+        let video = document.getElementById("video");
+        let canvasElement = document.getElementById("canvas");
+        let canvas = canvasElement.getContext("2d");
+        let liftIdInput = document.getElementById("liftId");
+        let scanning = false;
+
+        // Імітація бази даних ліфтів
+        const liftDatabase = {
+            "LIFT123": {
+                clientId: "OSBB1",
+                type: "Пасажирський",
+                model: "Otis Gen2",
+                year: "2018",
+                address: "вул. Центральна, 10, Київ",
+                capacity: "1000 кг",
+                speed: "1.5 м/с",
+                status: "Працює",
+                manufacturer: "Otis",
+                installedBy: "ТОВ ЛіфтСервіс",
+                installationDate: "15.06.2018",
+                lastMaintenance: "01.03.2025",
+                iotStatus: "Працює",
+                history: [
+                    { date: "15.03.2025", description: "Двері не зачиняються", status: "Вирішено", cost: 5000 },
+                    { date: "10.01.2025", description: "Аварійна зупинка", status: "Вирішено", cost: 8000 }
+                ],
+                inspections: [
+                    { date: "01.02.2025", result: "Пройдено", report: "Інспекція пройдена успішно." },
+                    { date: "15.11.2024", result: "Потрібен ремонт", report: "Виявлено проблему з дверима." }
+                ],
+                contract: "Контракт №123 від 01.01.2018 між ОСББ Центральне та ТОВ ЛіфтСервіс."
+            },
+            "LIFT124": {
+                clientId: "OSBB1",
+                type: "Пасажирський",
+                model: "KONE MonoSpace",
+                year: "2019",
+                address: "вул. Центральна, 12, Київ",
+                capacity: "800 кг",
+                speed: "1.2 м/с",
+                status: "На ремонті",
+                manufacturer: "KONE",
+                installedBy: "ТОВ ЛіфтСервіс",
+                installationDate: "20.07.2019",
+                lastMaintenance: "15.02.2025",
+                iotStatus: "На ремонті",
+                history: [
+                    { date: "20.02.2025", description: "Проблема з кабелем", status: "Нова", cost: 0 }
+                ],
+                inspections: [
+                    { date: "10.01.2025", result: "Пройдено", report: "Все в нормі." }
+                ],
+                contract: "Контракт №124 від 01.01.2019 між ОСББ Центральне та ТОВ ЛіфтСервіс."
+            }
+        };
+
+        // Зберігаємо історію в localStorage
+        if (!localStorage.getItem('liftDatabase')) {
+            localStorage.setItem('liftDatabase', JSON.stringify(liftDatabase));
+        }
+
+        // Зберігаємо відгуки
+        if (!localStorage.getItem('reviews')) {
+            localStorage.setItem('reviews', JSON.stringify([]));
+        }
+
+        function startScanner() {
+            if (scanning) {
+                stopScanner();
+                return;
+            }
+
+            scanning = true;
+            video.style.display = "block";
+            document.querySelector("button[onclick='startScanner()']").textContent = translations[currentLang]['scan-qr'] === "Сканувати QR-код" ? "Зупинити сканування" : "Stop Scanning";
+
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.setAttribute("playsinline", true);
+                    video.play();
+                    requestAnimationFrame(tick);
+                })
+                .catch(function(err) {
+                    alert("Помилка доступу до камери: " + err);
+                    stopScanner();
+                });
+        }
+
+        function stopScanner() {
+            scanning = false;
+            video.style.display = "none";
+            document.querySelector("button[onclick='startScanner()']").textContent = translations[currentLang]['scan-qr'] || "Сканувати QR-код";
+            if (video.srcObject)Sorry about that, something didn't go as planned. Please try again, and if you're still seeing this message, go ahead and restart the app.

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система Управління Ліфтами</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #007bff, #00aaff);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .status-active {
+            color: green;
+            font-weight: bold;
+        }
+
+        .status-inactive {
+            color: red;
+            font-weight: bold;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px 0;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Модальне вікно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 50%;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+
+        .form-container input, .form-container select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Адаптивність */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 80%;
+            }
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Система Управління Ліфтами</h1>
+        </div>
+
+        <h2>Список Ліфтів</h2>
+        <table id="elevatorTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Назва ⬍</th>
+                    <th onclick="sortTable(1)">Місцезнаходження ⬍</th>
+                    <th onclick="sortTable(2)">Статус ⬍</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Ліфт №1</td>
+                    <td>Блок А</td>
+                    <td class="status-active">Активний</td>
+                </tr>
+                <tr>
+                    <td>Ліфт №2</td>
+                    <td>Блок Б</td>
+                    <td class="status-inactive">Неактивний</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button class="button" onclick="openModal()">➕ Додати Запит</button>
+
+        <!-- Модальне вікно -->
+        <div id="requestModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Форма Створення Запиту</h2>
+                <div class="form-container">
+                    <form action="/submit-request" method="post" enctype="multipart/form-data">
+                        <label for="issue">Опис Проблеми:</label>
+                        <input type="text" id="issue" name="issue" placeholder="Опис проблеми..." required>
+
+                        <label for="priority">Пріоритет:</label>
+                        <select id="priority" name="priority" required>
+                            <option value="low">Низький</option>
+                            <option value="medium">Середній</option>
+                            <option value="high">Високий</option>
+                        </select>
+
+                        <label for="photo">Завантажити Фото "До":</label>
+                        <input type="file" id="photo" name="photo">
+
+                        <button type="submit" class="button">Надіслати Запит</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2025 Система Управління Ліфтами. Усі права захищено.
+    </footer>
+
+    <script>
+        function openModal() {
+            document.getElementById("requestModal").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("requestModal").style.display = "none";
+        }
+
+        function sortTable(n) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.getElementById("elevatorTable");
+            switching = true;
+            dir = "asc"; 
+
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+
+                    if (dir == "asc" && x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    } else if (dir == "desc" && x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else if (switchcount === 0 && dir === "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

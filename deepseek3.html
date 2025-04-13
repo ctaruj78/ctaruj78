@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiftMaster Pro</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --text-color: #ecf0f1;
+            --light-text: #bdc3c7;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 20px 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar-menu li:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .sidebar-menu li.active {
+            background-color: var(--accent-color);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .lifts-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .lifts-table th, .lifts-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .lifts-table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .lifts-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-ok {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .status-problem {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .export-options {
+            margin-top: 20px;
+        }
+
+        .dark-mode {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-top: 1px solid var(--secondary-color);
+            margin-top: auto;
+        }
+
+        .map-container {
+            height: 300px;
+            background-color: #eee;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>LiftMaster Pro</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="active">Дашборд</li>
+                <li>Ліфти</li>
+                <li>Завдання</li>
+                <li>Клієнти</li>
+                <li>Аналітика</li>
+                <li>PDF звіти</li>
+                <li>Налаштування</li>
+            </ul>
+            <div class="dark-mode">
+                <span>Темний режим</span>
+                <label class="switch" style="margin-left: 10px;">
+                    <input type="checkbox">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>Перегляд</h1>
+                <div>
+                    <button class="action-btn">Експорт</button>
+                    <button class="action-btn">CSV</button>
+                </div>
+            </div>
+
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <h3>Активні ліфти</h3>
+                    <div class="value">125</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Завдання на сьогодні</h3>
+                    <div class="value">8</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Сер. час реакції</h3>
+                    <div class="value">2 год</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Завершені заявки</h3>
+                    <div class="value">0</div>
+                </div>
+            </div>
+
+            <div class="map-container">
+                <!-- Тут буде інтегрована мапа з ліфтами -->
+                <p style="text-align: center; padding-top: 140px;">Leaflet | Map data © OpenStreetMap contributors</p>
+            </div>
+
+            <div>
+                <h2>Ліфти</h2>
+                <div style="margin-bottom: 15px;">
+                    <button class="action-btn">Усі</button>
+                    <button class="action-btn">Пошук</button>
+                    <input type="text" placeholder="Пошук..." style="padding: 5px; margin-left: 10px;">
+                </div>
+                
+                <table class="lifts-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Адреса</th>
+                            <th>Статус</th>
+                            <th>Останнє ТО</th>
+                            <th>Фото</th>
+                            <th>Дія</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>34</td>
+                            <td>вул. Шевченка, 10</td>
+                            <td><span class="status-badge status-problem">Проблема</span></td>
+                            <td>2025-03-01</td>
+                            <td>▾Фото ліфта</td>
+                            <td><button class="action-btn">Деталі</button></td>
+                        </tr>
+                        <tr>
+                            <td>78</td>
+                            <td>вул. Франка, 22</td>
+                            <td><span class="status-badge status-ok">OK</span></td>
+                            <td>2025-03-28</td>
+                            <td>▾Фото ліфта</td>
+                            <td><button class="action-btn">Деталі</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Тут можна додати функціонал для:
+        // - Перемикання між вкладками меню
+        // - Фільтрації таблиці ліфтів
+        // - Експорту даних
+        // - Перемикання темного режиму
+        // - Взаємодії з мапою (Leaflet.js)
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Приклад обробника для кнопок меню
+            const menuItems = document.querySelectorAll('.sidebar-menu li');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    menuItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    // Тут можна додати код для завантаження відповідного вмісту
+                });
+            });
+            
+            // Приклад для темного режиму
+            const darkModeToggle = document.querySelector('.dark-mode input');
+            darkModeToggle.addEventListener('change', function() {
+                document.body.classList.toggle('dark-theme');
+                // Тут можна додати логіку збереження налаштувань
+            });
+        });
+    </script>
+</body>
+</html>

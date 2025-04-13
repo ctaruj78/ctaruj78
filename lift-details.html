@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lift Details - LiftMaster Pro</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" defer></script>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>LiftMaster Pro</h2>
+    <ul>
+      <li><a href="dashboard.html">Дашборд</a></li>
+      <li><a href="client.html">Ліфти</a></li>
+      <li><a class="active" href="#">Деталі</a></li>
+      <li><a href="analytics.html">Аналітика</a></li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <h1>Деталі ліфта</h1>
+
+    <div class="lift-info">
+      <h2>Інформація про ліфт</h2>
+      <form id="liftForm">
+        <label>Адреса:
+          <input type="text" id="address" required />
+        </label>
+        <label>Номер ліфта:
+          <input type="text" id="liftNumber" required />
+        </label>
+        <label>Модель:
+          <input type="text" id="model" />
+        </label>
+        <label>Дата встановлення:
+          <input type="date" id="installDate" />
+        </label>
+        <button type="submit">Зберегти зміни</button>
+      </form>
+    </div>
+
+    <div class="map-container">
+      <h2>Мапа</h2>
+      <div id="map" style="height: 300px;"></div>
+    </div>
+
+    <div class="breakdown-history">
+      <h2>Історія поломок</h2>
+      <select id="filterStatus">
+        <option value="all">Всі</option>
+        <option value="pending">В очікуванні</option>
+        <option value="inprogress">В процесі</option>
+        <option value="done">Завершено</option>
+      </select>
+      <ul id="historyList"></ul>
+    </div>
+
+    <div class="photo-section">
+      <h2>Фото до/після ремонту</h2>
+      <label>Фото ДО:
+        <input type="file" accept="image/*" id="beforePhoto" />
+        <img id="previewBefore" />
+      </label>
+      <label>Фото ПІСЛЯ:
+        <input type="file" accept="image/*" id="afterPhoto" />
+        <img id="previewAfter" />
+      </label>
+    </div>
+
+    <div class="chat-section">
+      <h2>Чат</h2>
+      <input type="text" id="chatSearch" placeholder="Пошук..." />
+      <div id="chatBox"></div>
+      <input type="file" id="fileUpload" />
+      <input type="text" id="chatInput" placeholder="Напишіть повідомлення..." />
+      <button id="sendBtn">Надіслати</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

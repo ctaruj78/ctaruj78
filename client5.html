@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Клієнт - Реєстрація поломки</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        h2, h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h3 {
+            font-size: 18px;
+        }
+        label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: block;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input, select {
+            background-color: #444;
+            color: white;
+        }
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+            background-color: #444;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .notification {
+            background-color: #28a745;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: none;
+            text-align: center;
+        }
+        .urgent-notification {
+            background-color: #ff0000;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        #video, #canvas {
+            display: none;
+            width: 100%;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        #canvas {
+            display: none;
+        }
+        .sos-button {
+            background-color: #ff0000;
+            font-weight: bold;
+        }
+        .sos-button:hover {
+            background-color: #cc0000;
+        }
+        .ai-prediction, .lift-details, .history-section, .inspection-section, .iot-status {
+            background-color: #555;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .lift-details p, .history-section p, .inspection-section p, .iot-status p {
+            margin: 5px 0;
+        }
+        .inspection-section a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .inspection-section a:hover {
+            text-decoration: underline;
+        }
+        .language-switcher {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .rating-section {
+            margin: 10px 0;
+        }
+        .rating-section select {
+            width: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="language-switcher">
+        <select id="language" onchange="changeLanguage()">
+            <option value="uk">Українська</option>
+            <option value="en">English</option>
+            <option value="ru">Русский</option>
+        </select>
+    </div>
+
+    <div class="container" id="registerContainer" style="display: none;">
+        <h2 data-lang="register-title">Реєстрація</h2>
+        <label data-lang="username">Ім’я користувача:</label>
+        <input type="text" id="regUsername" placeholder="Введіть ім’я користувача">
+        <label data-lang="password">Пароль:</label>
+        <input type="password" id="regPassword" placeholder="Введіть пароль">
+        <button onclick="register()">Зареєструватися</button>
+        <button onclick="showLogin()" style="background-color: #666;">Увійти</button>
+    </div>
+
+    <div class="container" id="loginContainer">
+        <h2 data-lang="login-title">Вхід</h2>
+        <label data-lang="username">Ім’я користувача:</label>
+        <input type="text" id="username" placeholder="Введіть ім’я користувача">
+        <label data-lang="password">Пароль:</label>
+        <input type="password" id="password" placeholder="Введіть пароль">
+        <button onclick="login()">Увійти</button>
+        <button onclick="showRegister()" style="background-color: #666;">Зареєструватися</button>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none;">
+        <h2 data-lang="register-issue">Реєстрація поломки</h2>
+        <button onclick="openDashboard()" style="background-color: #666;" data-lang="dashboard">Мій кабінет</button>
+
+        <!-- Сповіщення про термінові поломки -->
+        <div class="urgent-notification" id="urgentNotification" style="display: none;">
+            <p>Увага! Є термінові поломки, які потребують вашої уваги.</p>
+            <button onclick="openDashboard()">Переглянути</button>
+        </div>
+
+        <label data-lang="lift-id">ID ліфта (авто):</label>
+        <input type="text" id="liftId" placeholder="Введіть ID ліфта вручну" onblur="fetchLiftDetails()">
+        <button onclick="startScanner()" data-lang="scan-qr">Сканувати QR-код</button>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+
+        <!-- Статус ліфта (імітація IoT) -->
+        <div class="iot-status" id="iotStatus" style="display: none;">
+            <p><strong data-lang="iot-status">Статус ліфта (IoT):</strong> <span id="iotStatusText"></span></p>
+        </div>
+
+        <!-- Деталі ліфта -->
+        <div class="lift-details" id="liftDetails" style="display: none;">
+            <h3 data-lang="lift-info">Інформація про ліфт</h3>
+            <p><strong data-lang="model">Модель:</strong> <span id="liftModel"></span></p>
+            <p><strong data-lang="year">Рік випуску:</strong> <span id="liftYear"></span></p>
+            <p><strong data-lang="address">Адреса:</strong> <span id="liftAddress"></span></p>
+            <p><strong data-lang="capacity">Вантажопідйомність:</strong> <span id="liftCapacity"></span></p>
+            <p><strong data-lang="speed">Швидкість:</strong> <span id="liftSpeed"></span></p>
+            <p><strong data-lang="status">Статус:</strong> <span id="liftStatus"></span></p>
+            <p><strong data-lang="manufacturer">Виробник:</strong> <span id="liftManufacturer"></span></p>
+            <p><strong data-lang="last-maintenance">Дата останнього ТО:</strong> <span id="liftLastMaintenance"></span></p>
+        </div>
+
+        <!-- Історія поломок -->
+        <div class="history-section" id="liftHistory" style="display: none;">
+            <h3 data-lang="history">Історія поломок</h3>
+            <select id="historyFilter" onchange="filterHistory()">
+                <option value="all" data-lang="filter-all">Усі</option>
+                <option value="new" data-lang="filter-new">Нові</option>
+                <option value="resolved" data-lang="filter-resolved">Вирішені</option>
+                <option value="urgent" data-lang="filter-urgent">Термінові</option>
+            </select>
+            <div id="historyList"></div>
+        </div>
+
+        <!-- Останні інспекції -->
+        <div class="inspection-section" id="liftInspections" style="display: none;">
+            <h3 data-lang="inspections">Останні інспекції</h3>
+            <div id="inspectionList"></div>
+        </div>
+
+        <!-- AI-прогноз -->
+        <div class="ai-prediction" id="aiPrediction" style="display: none;">
+            <span data-lang="ai-prediction"></span> <span id="aiPredictionText"></span>
+        </div>
+
+        <label data-lang="description">Опис поломки:</label>
+        <input type="text" id="description" placeholder="Опишіть проблему">
+        <label data-lang="priority">Пріоритет:</label>
+        <select id="priority">
+            <option value="low" data-lang="priority-low">Низький</option>
+            <option value="medium" data-lang="priority-medium">Середній</option>
+            <option value="high" data-lang="priority-high">Високий</option>
+        </select>
+        <label data-lang="complexity">Рівень складності:</label>
+        <select id="complexity">
+            <option value="easy" data-lang="complexity-easy">Легкий</option>
+            <option value="medium" data-lang="complexity-medium">Середній</option>
+            <option value="hard" data-lang="complexity-hard">Складний</option>
+        </select>
+        <label data-lang="attach-file">Вибір файлу:</label>
+        <input type="file" id="photo" accept="image/*">
+        <button onclick="submitIssue()" data-lang="submit-issue">Зареєструвати поломку</button>
+        <div class="notification" id="notification"></div>
+
+        <!-- Оцінка техніка -->
+        <div class="rating-section" id="ratingSection" style="display: none;">
+            <label data-lang="rate-technician">Оцініть роботу техніка:</label>
+            <select id="technicianRating">
+                <option value="5">5 зірок</option>
+                <option value="4">4 зірки</option>
+                <option value="3">3 зірки</option>
+                <option value="2">2 зірки</option>
+                <option value="1">1 зірка</option>
+            </select>
+            <label>Коментар:</label>
+            <input type="text" id="ratingComment" placeholder="Ваш коментар">
+            <button onclick="submitRating()" data-lang="submit-rating">Надіслати оцінку</button>
+            <button onclick="viewRatings()" data-lang="view-ratings">Переглянути відгуки</button>
+        </div>
+
+        <button onclick="viewIssues()" data-lang="view-issues">Переглянути мої заявки</button>
+        <button onclick="openChat()" data-lang="chat">Чат з техніком</button>
+        <button class="sos-button" onclick="sosAlert()" data-lang="sos">SOS: Я застряг у ліфті!</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        // Багатомовність
+        const translations = {
+            uk: {
+                "register-title": "Реєстрація",
+                "login-title": "Вхід",
+                "username": "Ім’я користувача:",
+                "password": "Пароль:",
+                "invalid-login": "Невірне ім’я користувача або пароль",
+                "register-success": "Реєстрація успішна! Тепер увійдіть.",
+                "register-issue": "Реєстрація поломки",
+                "dashboard": "Мій кабінет",
+                "lift-id": "ID ліфта (авто):",
+                "scan-qr": "Сканувати QR-код",
+                "iot-status": "Статус ліфта (IoT):",
+                "lift-info": "Інформація про ліфт",
+                "model": "Модель:",
+                "year": "Рік випуску:",
+                "address": "Адреса:",
+                "capacity": "Вантажопідйомність:",
+                "speed": "Швидкість:",
+                "status": "Статус:",
+                "manufacturer": "Виробник:",
+                "last-maintenance": "Дата останнього ТО:",
+                "history": "Історія поломок",
+                "filter-all": "Усі",
+                "filter-new": "Нові",
+                "filter-resolved": "Вирішені",
+                "filter-urgent": "Термінові",
+                "inspections": "Останні інспекції",
+                "ai-prediction": "AI-прогноз:",
+                "description": "Опис поломки:",
+                "priority": "Пріоритет:",
+                "priority-low": "Низький",
+                "priority-medium": "Середній",
+                "priority-high": "Високий",
+                "complexity": "Рівень складності:",
+                "complexity-easy": "Легкий",
+                "complexity-medium": "Середній",
+                "complexity-hard": "Складний",
+                "attach-file": "Вибір файлу:",
+                "submit-issue": "Зареєструвати поломку",
+                "rate-technician": "Оцініть роботу техніка:",
+                "submit-rating": "Надіслати оцінку",
+                "view-ratings": "Переглянути відгуки",
+                "view-issues": "Переглянути мої заявки",
+                "chat": "Чат з техніком",
+                "sos": "SOS: Я застряг у ліфті!"
+            },
+            en: {
+                "register-title": "Register",
+                "login-title": "Login",
+                "username": "Username:",
+                "password": "Password:",
+                "invalid-login": "Invalid username or password",
+                "register-success": "Registration successful! Now log in.",
+                "register-issue": "Register an Issue",
+                "dashboard": "My Dashboard",
+                "lift-id": "Lift ID (auto):",
+                "scan-qr": "Scan QR Code",
+                "iot-status": "Lift Status (IoT):",
+                "lift-info": "Lift Information",
+                "model": "Model:",
+                "year": "Year of Manufacture:",
+                "address": "Address:",
+                "capacity": "Capacity:",
+                "speed": "Speed:",
+                "status": "Status:",
+                "manufacturer": "Manufacturer:",
+                "last-maintenance": "Last Maintenance Date:",
+                "history": "Issue History",
+                "filter-all": "All",
+                "filter-new": "New",
+                "filter-resolved": "Resolved",
+                "filter-urgent": "Urgent",
+                "inspections": "Recent Inspections",
+                "ai-prediction": "AI Prediction:",
+                "description": "Issue Description:",
+                "priority": "Priority:",
+                "priority-low": "Low",
+                "priority-medium": "Medium",
+                "priority-high": "High",
+                "complexity": "Complexity Level:",
+                "complexity-easy": "Easy",
+                "complexity-medium": "Medium",
+                "complexity-hard": "Hard",
+                "attach-file": "Attach File:",
+                "submit-issue": "Register Issue",
+                "rate-technician": "Rate the Technician:",
+                "submit-rating": "Submit Rating",
+                "view-ratings": "View Ratings",
+                "view-issues": "View My Issues",
+                "chat": "Chat with Technician",
+                "sos": "SOS: I’m Stuck in the Lift!"
+            },
+            ru: {
+                "register-title": "Регистрация",
+                "login-title": "Вход",
+                "username": "Имя пользователя:",
+                "password": "Пароль:",
+                "invalid-login": "Неверное имя пользователя или пароль",
+                "register-success": "Регистрация успешна! Теперь войдите.",
+                "register-issue": "Регистрация поломки",
+                "dashboard": "Мой кабинет",
+                "lift-id": "ID лифта (авто):",
+                "scan-qr": "Сканировать QR-код",
+                "iot-status": "Статус лифта (IoT):",
+                "lift-info": "Информация о лифте",
+                "model": "Модель:",
+                "year": "Год выпуска:",
+                "address": "Адрес:",
+                "capacity": "Грузоподъемность:",
+                "speed": "Скорость:",
+                "status": "Статус:",
+                "manufacturer": "Производитель:",
+                "last-maintenance": "Дата последнего ТО:",
+                "history": "История поломок",
+                "filter-all": "Все",
+                "filter-new": "Новые",
+                "filter-resolved": "Решенные",
+                "filter-urgent": "Срочные",
+                "inspections": "Последние инспекции",
+                "ai-prediction": "AI-прогноз:",
+                "description": "Описание поломки:",
+                "priority": "Приоритет:",
+                "priority-low": "Низкий",
+                "priority-medium": "Средний",
+                "priority-high": "Высокий",
+                "complexity": "Уровень сложности:",
+                "complexity-easy": "Легкий",
+                "complexity-medium": "Средний",
+                "complexity-hard": "Сложный",
+                "attach-file": "Выбор файла:",
+                "submit-issue": "Зарегистрировать поломку",
+                "rate-technician": "Оцените работу техника:",
+                "submit-rating": "Отправить оценку",
+                "view-ratings": "Посмотреть отзывы",
+                "view-issues": "Посмотреть мои заявки",
+                "chat": "Чат с техником",
+                "sos": "SOS: Я застрял в лифте!"
+            }
+        };
+
+        let currentLang = 'uk';
+
+        function changeLanguage() {
+            currentLang = document.getElementById('language').value;
+            document.querySelectorAll('[data-lang]').forEach(element => {
+                const key = element.getAttribute('data-lang');
+                element.textContent = translations[currentLang][key] || element.textContent;
+            });
+        }
+
+        function showRegister() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('registerContainer').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('registerContainer').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'block';
+        }
+
+        function register() {
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+
+            if (username && password) {
+                localStorage.setItem('username', username);
+                localStorage.setItem('password', password);
+                alert(translations[currentLang]['register-success'] || 'Реєстрація успішна! Тепер увійдіть.');
+                showLogin();
+            } else {
+                alert('Будь ласка, заповніть усі поля.');
+            }
+        }
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const storedUsername = localStorage.getItem('username');
+            const storedPassword = localStorage.getItem('password');
+
+            if (username === storedUsername && password === storedPassword) {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+                checkUrgentIssues();
+            } else {
+                alert(translations[currentLang]['invalid-login'] || 'Невірне ім’я користувача або пароль');
+            }
+        }
+
+        function openDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        function startScanner() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
+            video.style.display = 'block';
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.play();
+                    requestAnimationFrame(tick);
+                });
+
+            function tick() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.height = video.videoHeight;
+                    canvas.width = video.videoWidth;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    if (code) {
+                        document.getElementById('liftId').value = code.data;
+                        video.srcObject.getTracks().forEach(track => track.stop());
+                        video.style.display = 'none';
+                        fetchLiftDetails();
+                    } else {
+                        requestAnimationFrame(tick);
+                    }
+                } else {
+                    requestAnimationFrame(tick);
+                }
+            }
+        }
+
+        function fetchLiftDetails() {
+            const liftId = document.getElementById('liftId').value;
+            if (liftId === 'LIFT123') {
+                document.getElementById('liftDetails').style.display = 'block';
+                document.getElementById('liftModel').textContent = 'Otis Gen2';
+                document.getElementById('liftYear').textContent = '2015';
+                document.getElementById('liftAddress').textContent = 'вул. Центральна, 10, Київ';
+                document.getElementById('liftCapacity').textContent = '1000 кг';
+                document.getElementById('liftSpeed').textContent = '1.5 м/с';
+                document.getElementById('liftStatus').textContent = 'Працює';
+                document.getElementById('liftManufacturer').textContent = 'Otis';
+                document.getElementById('liftLastMaintenance').textContent = '2023-10-01';
+
+                document.getElementById('iotStatus').style.display = 'block';
+                document.getElementById('iotStatusText').textContent = 'Працює нормально';
+
+                document.getElementById('liftHistory').style.display = 'block';
+                document.getElementById('historyList').innerHTML = `
+                    <p>2023-09-15: Поломка дверей (Вирішено)</p>
+                    <p>2023-08-10: Проблема з кнопками (Терміново)</p>
+                `;
+
+                document.getElementById('liftInspections').style.display = 'block';
+                document.getElementById('inspectionList').innerHTML = `
+                    <p>2023-10-01: Плановий огляд <a href="#" onclick="downloadInspection('2023-10-01')">Завантажити PDF</a></p>
+                    <p>2023-07-01: Плановий огляд <a href="#" onclick="downloadInspection('2023-07-01')">Завантажити PDF</a></p>
+                `;
+
+                document.getElementById('aiPrediction').style.display = 'block';
+                document.getElementById('aiPredictionText').textContent = 'Ймовірність поломки: 15%';
+            }
+        }
+
+        function downloadInspection(date) {
+            const content = `Звіт про інспекцію ліфта\nДата: ${date}\nСтатус: Усе в порядку`;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `inspection_${date}.txt`;
+            a.click();
+            window.URL.reSorry about that, something didn't go as planned. Please try again, and if you're still seeing this message, go ahead and restart the app.

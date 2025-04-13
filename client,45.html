@@ -1,0 +1,569 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiftMaster Pro - Дашборд</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>LiftMaster Pro</h2>
+        <a href="#" onclick="showDashboard()"><i class="fas fa-tachometer-alt"></i> <span data-lang="dashboard">Дашборд</span></a>
+        <a href="#" onclick="showLifts()" id="liftsMenu"><i class="fas fa-elevator"></i> <span data-lang="lifts">Ліфти</span></a>
+        <a href="#" onclick="showClients()" id="clientsMenu"><i class="fas fa-users"></i> <span data-lang="clients">Клієнти</span></a>
+        <a href="#" onclick="showAnalytics()" id="analyticsMenu"><i class="fas fa-chart-line"></i> <span data-lang="analytics">Аналітика</span></a>
+        <a href="qr-scanner.html" id="qrScannerMenu" style="display: none;"><i class="fas fa-qrcode"></i> QR Сканер</a>
+        <a href="#" onclick="showSettings()"><i class="fas fa-cog"></i> <span data-lang="settings">Налаштування</span></a>
+        <a href="#" onclick="logout()" style="position: absolute; bottom: 20px;"><i class="fas fa-sign-out-alt"></i> Вийти</a>
+    </div>
+
+    <div class="main-content" id="dashboard">
+        <div class="header">
+            <h1 data-lang="dashboard">Дашборд</h1>
+            <div>Роль: <span id="userRole"></span></div>
+        </div>
+
+        <div class="notification" id="urgentNotification" style="display: none;">
+            Увага! Є термінові заявки, які потребують вашої уваги.
+        </div>
+
+        <div class="stats" id="statsSection">
+            <div class="stat-card">
+                <h3 data-lang="active-lifts">Активні ліфти</h3>
+                <p id="activeLifts">125</p>
+            </div>
+            <div class="stat-card">
+                <h3 data-lang="today-issues">Заявки на сьогодні</h3>
+                <p id="todayIssues">8</p>
+            </div>
+            <div class="stat-card">
+                <h3 data-lang="reclamation-time">Час рекламації (рік)</h3>
+                <p id="reclamationTime">2 год</p>
+            </div>
+        </div>
+
+        <button id="toggleNewLiftForm" class="toggle-form-btn" style="display: none;" onclick="toggleLiftForm()">
+            <i class="fas fa-plus"></i> Додати новий ліфт
+        </button>
+
+        <div class="new-lift-form" id="newLiftForm">
+            <h3>Додати новий ліфт</h3>
+            <input type="text" id="newLiftId" placeholder="ID ліфта (обов’язково)" required>
+            <input type="text" id="newLiftAddress" placeholder="Адреса (обов’язково)" required>
+            <input type="text" id="newLiftType" placeholder="Тип (наприклад, Пасажирський)">
+            <input type="text" id="newLiftBrand" placeholder="Марка (наприклад, Otis)">
+            <input type="text" id="newLiftManufacturer" placeholder="Виробник">
+            <input type="date" id="newLiftInstallationDate" placeholder="Дата встановлення">
+            <input type="text" id="newLiftCapacity" placeholder="Вантажопідйомність (наприклад, 1000 кг)">
+            <input type="text" id="newLiftSpeed" placeholder="Швидкість (наприклад, 1.5 м/с)">
+            <select id="newLiftStatus" required>
+                <option value="Активний">Активний</option>
+                <option value="Поломка">Поломка</option>
+            </select>
+            <input type="date" id="newLiftMaintenance" placeholder="Останнє ТО (опціонально)">
+            <input type="email" id="newLiftClientEmail" placeholder="Email клієнта (опціонально)">
+            <input type="tel" id="newLiftClientPhone" placeholder="Номер телефону клієнта (опціонально)">
+            <div class="form-buttons">
+                <button onclick="addNewLift()">Додати</button>
+                <button onclick="toggleLiftForm()" class="hide-form-btn">Приховати</button>
+            </div>
+        </div>
+
+        <div class="filter-search">
+            <input type="text" id="searchInput" data-lang="search-placeholder" placeholder="Пошук за адресою або ID..." onkeyup="filterLifts()">
+            <select id="statusFilter" onchange="filterLifts()">
+                <option value="all" data-lang="all-statuses">Усі статуси</option>
+                <option value="active" data-lang="active">Активний</option>
+                <option value="broken" data-lang="broken">Поломка</option>
+            </select>
+            <button onclick="exportToCSV()" class="download-btn"><i class="fas fa-download"></i> Експорт у CSV</button>
+        </div>
+
+        <div class="table-container">
+            <table id="liftsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">ID <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(1)">Адреса <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(2)">Статус <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(3)">Останнє ТО <i class="fas fa-sort"></i></th>
+                        <th>Дії</th>
+                    </tr>
+                </thead>
+                <tbody id="liftsTableBody">
+                    <!-- Динамічно заповнюється через JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination" id="pagination">
+            <!-- Динамічно заповнюється через JavaScript -->
+        </div>
+
+        <div class="new-issue-form" id="newIssueForm">
+            <h3 data-lang="new-issue">Нова заявка</h3>
+            <input type="text" id="newLiftId" data-lang="lift-id" placeholder="ID ліфта">
+            <input type="text" id="newDescription" data-lang="description" placeholder="Опис проблеми">
+            <select id="newPriority">
+                <option value="low" data-lang="priority-low">Низький</option>
+                <option value="medium" data-lang="priority-medium">Середній</option>
+                <option value="high" data-lang="priority-high">Високий</option>
+            </select>
+            <button onclick="submitNewIssue()" data-lang="submit">Надіслати</button>
+        </div>
+
+        <!-- Секція налаштувань -->
+        <div class="settings-section" id="settingsSection" style="display: none;">
+            <h2 data-lang="settings">Налаштування</h2>
+            <div class="setting-item">
+                <label for="languageSelect" data-lang="language">Мова:</label>
+                <select id="languageSelect" onchange="changeLanguage()">
+                    <option value="uk">Українська</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="themeSelect" data-lang="theme">Тема:</label>
+                <select id="themeSelect" onchange="changeTheme()">
+                    <option value="dark">Темна</option>
+                    <option value="light">Світла</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="dateFormatSelect" data-lang="date-format">Формат дати:</label>
+                <select id="dateFormatSelect" onchange="changeDateFormat()">
+                    <option value="DD.MM.YYYY">ДД.ММ.РРРР</option>
+                    <option value="MM/DD/YYYY">ММ/ДД/РРРР</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label data-lang="notifications">Сповіщення:</label>
+                <label><input type="checkbox" id="urgentNotifications" onchange="updateNotificationSettings()"> Термінові заявки</label>
+                <label><input type="checkbox" id="statusNotifications" onchange="updateNotificationSettings()"> Зміна статусу ліфта</label>
+            </div>
+            <button onclick="saveSettings()" class="download-btn">Зберегти налаштування</button>
+        </div>
+    </div>
+
+    <script src="translations.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+            window.location.href = 'login.html';
+        }
+
+        let lifts = JSON.parse(localStorage.getItem('lifts')) || [
+            { 
+                id: "34", 
+                address: "вул. Перемоги, 12", 
+                type: "Пасажирський", 
+                brand: "Otis", 
+                manufacturer: "Otis Elevators", 
+                installationDate: "2015-06-20", 
+                capacity: "1000 кг", 
+                speed: "1.5 м/с", 
+                status: "Поломка", 
+                lastMaintenance: "2025-03-13",
+                clientEmail: "client34@example.com",
+                clientPhone: "+380671234567"
+            },
+            { 
+                id: "78", 
+                address: "пр. Миру, 45", 
+                type: "Пасажирський", 
+                brand: "KONE", 
+                manufacturer: "KONE Corporation", 
+                installationDate: "2018-09-15", 
+                capacity: "800 кг", 
+                speed: "1.2 м/с", 
+                status: "Активний", 
+                lastMaintenance: "2025-03-29",
+                clientEmail: "client78@example.com",
+                clientPhone: "+380671234568"
+            },
+        ];
+
+        if (!localStorage.getItem('lifts')) {
+            for (let i = 3; i <= 100; i++) {
+                lifts.push({
+                    id: i.toString(),
+                    address: `вул. Центральна, ${i}`,
+                    type: "Пасажирський",
+                    brand: "Generic",
+                    manufacturer: "Generic Manufacturer",
+                    installationDate: "2020-01-01",
+                    capacity: "900 кг",
+                    speed: "1.0 м/с",
+                    status: i % 2 === 0 ? "Активний" : "Поломка",
+                    lastMaintenance: `2025-03-${i % 30 + 1}`,
+                    clientEmail: `client${i}@example.com`,
+                    clientPhone: `+3806712345${i.toString().padStart(2, '0')}`
+                });
+            }
+            localStorage.setItem('lifts', JSON.stringify(lifts));
+        }
+
+        let currentPage = 1;
+        const liftsPerPage = 10;
+        let sortColumn = -1;
+        let sortDirection = 1;
+
+        // Завантаження налаштувань
+        let settings = JSON.parse(localStorage.getItem('settings')) || {
+            language: 'uk',
+            theme: 'dark',
+            dateFormat: 'DD.MM.YYYY',
+            notifications: {
+                urgent: true,
+                status: true
+            }
+        };
+
+        function setupRoleAccess() {
+            document.getElementById('userRole').textContent = user.role === 'admin' ? 'Адміністратор' : user.role === 'client' ? 'Клієнт' : 'Технік';
+            if (user.role === 'technician') {
+                document.getElementById('statsSection').style.display = 'none';
+                document.getElementById('clientsMenu').style.display = 'none';
+                document.getElementById('analyticsMenu').style.display = 'none';
+                document.getElementById('newIssueForm').style.display = 'block';
+                document.getElementById('qrScannerMenu').style.display = 'block';
+            } else if (user.role === 'client') {
+                document.getElementById('clientsMenu').style.display = 'none';
+                document.getElementById('analyticsMenu').style.display = 'none';
+                document.getElementById('newIssueForm').style.display = 'block';
+            } else if (user.role === 'admin') {
+                document.getElementById('toggleNewLiftForm').style.display = 'block';
+                document.getElementById('newIssueForm').style.display = 'block';
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('settingsSection').style.display = 'none';
+        }
+
+        function showSettings() {
+            console.log("Відкриття налаштувань...");
+            document.getElementById('dashboard').style.display = 'none';
+            const settingsSection = document.getElementById('settingsSection');
+            if (settingsSection) {
+                settingsSection.style.display = 'block';
+                loadSettings();
+            } else {
+                console.error("Елемент settingsSection не знайдено!");
+            }
+        }
+
+        function loadSettings() {
+            console.log("Завантаження налаштувань:", settings);
+            if (!settings) {
+                settings = {
+                    language: 'uk',
+                    theme: 'dark',
+                    dateFormat: 'DD.MM.YYYY',
+                    notifications: {
+                        urgent: true,
+                        status: true
+                    }
+                };
+            }
+            const languageSelect = document.getElementById('languageSelect');
+            const themeSelect = document.getElementById('themeSelect');
+            const dateFormatSelect = document.getElementById('dateFormatSelect');
+            const urgentNotifications = document.getElementById('urgentNotifications');
+            const statusNotifications = document.getElementById('statusNotifications');
+
+            if (languageSelect) languageSelect.value = settings.language || 'uk';
+            if (themeSelect) themeSelect.value = settings.theme || 'dark';
+            if (dateFormatSelect) dateFormatSelect.value = settings.dateFormat || 'DD.MM.YYYY';
+            if (urgentNotifications) urgentNotifications.checked = settings.notifications?.urgent ?? true;
+            if (statusNotifications) statusNotifications.checked = settings.notifications?.status ?? true;
+        }
+
+        function changeTheme() {
+            const theme = document.getElementById('themeSelect').value;
+            settings.theme = theme;
+            applyTheme();
+        }
+
+        function applyTheme() {
+            console.log("Застосування теми:", settings.theme);
+            if (settings.theme === 'light') {
+                document.body.classList.add('light-theme');
+            } else {
+                document.body.classList.remove('light-theme');
+            }
+        }
+
+        function changeDateFormat() {
+            settings.dateFormat = document.getElementById('dateFormatSelect').value;
+            displayLifts();
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Не вказано';
+            const date = new Date(dateStr);
+            if (isNaN(date)) return 'Не вказано';
+            if (settings.dateFormat === 'MM/DD/YYYY') {
+                return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear()}`;
+            } else {
+                return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
+            }
+        }
+
+        function updateNotificationSettings() {
+            settings.notifications.urgent = document.getElementById('urgentNotifications').checked;
+            settings.notifications.status = document.getElementById('statusNotifications').checked;
+        }
+
+        function saveSettings() {
+            localStorage.setItem('settings', JSON.stringify(settings));
+            alert('Налаштування збережено!');
+            applyTheme();
+            changeLanguage();
+            displayLifts();
+        }
+
+        function toggleLiftForm() {
+            const form = document.getElementById('newLiftForm');
+            const toggleButton = document.getElementById('toggleNewLiftForm');
+            if (form.style.display === 'block') {
+                form.style.display = 'none';
+                toggleButton.innerHTML = '<i class="fas fa-plus"></i> Додати новий ліфт';
+            } else {
+                form.style.display = 'block';
+                toggleButton.innerHTML = '<i class="fas fa-minus"></i> Приховати форму';
+            }
+        }
+
+        function displayLifts() {
+            const tableBody = document.getElementById('liftsTableBody');
+            tableBody.innerHTML = '';
+
+            const filteredLifts = filterLiftsData();
+            const sortedLifts = sortLifts(filteredLifts);
+            const start = (currentPage - 1) * liftsPerPage;
+            const end = start + liftsPerPage;
+            const paginatedLifts = sortedLifts.slice(start, end);
+
+            paginatedLifts.forEach(lift => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${lift.id}</td>
+                    <td>${lift.address}</td>
+                    <td style="color: ${lift.status === 'Поломка' ? 'red' : 'green'}">${lift.status}</td>
+                    <td>${formatDate(lift.lastMaintenance)}</td>
+                    <td>
+                        <button class="details-btn" onclick="viewLiftDetails('${lift.id}')">Деталі</button>
+                        ${user.role === 'admin' ? `<button class="delete-btn" onclick="deleteLift('${lift.id}')">Видалити</button>` : ''}
+                        ${user.role === 'admin' && lift.clientEmail ? `<button class="email-btn" onclick="sendEmailToClient('${lift.id}')">Надіслати Email</button>` : ''}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            updatePagination(sortedLifts.length);
+            updateStats();
+            checkUrgentIssues();
+        }
+
+        function addNewLift() {
+            const id = document.getElementById('newLiftId').value;
+            const address = document.getElementById('newLiftAddress').value;
+            const type = document.getElementById('newLiftType').value || '';
+            const brand = document.getElementById('newLiftBrand').value || '';
+            const manufacturer = document.getElementById('newLiftManufacturer').value || '';
+            const installationDate = document.getElementById('newLiftInstallationDate').value || '';
+            const capacity = document.getElementById('newLiftCapacity').value || '';
+            const speed = document.getElementById('newLiftSpeed').value || '';
+            const status = document.getElementById('newLiftStatus').value;
+            const lastMaintenance = document.getElementById('newLiftMaintenance').value || '';
+            const clientEmail = document.getElementById('newLiftClientEmail').value || '';
+            const clientPhone = document.getElementById('newLiftClientPhone').value || '';
+
+            if (id && address && status) {
+                lifts.push({
+                    id,
+                    address,
+                    type,
+                    brand,
+                    manufacturer,
+                    installationDate,
+                    capacity,
+                    speed,
+                    status,
+                    lastMaintenance,
+                    clientEmail,
+                    clientPhone
+                });
+                localStorage.setItem('lifts', JSON.stringify(lifts));
+                displayLifts();
+                document.getElementById('newLiftId').value = '';
+                document.getElementById('newLiftAddress').value = '';
+                document.getElementById('newLiftType').value = '';
+                document.getElementById('newLiftBrand').value = '';
+                document.getElementById('newLiftManufacturer').value = '';
+                document.getElementById('newLiftInstallationDate').value = '';
+                document.getElementById('newLiftCapacity').value = '';
+                document.getElementById('newLiftSpeed').value = '';
+                document.getElementById('newLiftStatus').value = 'Активний';
+                document.getElementById('newLiftMaintenance').value = '';
+                document.getElementById('newLiftClientEmail').value = '';
+                document.getElementById('newLiftClientPhone').value = '';
+                toggleLiftForm();
+            } else {
+                alert('Будь ласка, заповніть усі обов’язкові поля (ID, Адреса, Статус).');
+            }
+        }
+
+        function deleteLift(liftId) {
+            if (confirm('Ви впевнені, що хочете видалити цей ліфт?')) {
+                lifts = lifts.filter(lift => lift.id !== liftId);
+                localStorage.setItem('lifts', JSON.stringify(lifts));
+                displayLifts();
+            }
+        }
+
+        function sendEmailToClient(liftId) {
+            const lift = lifts.find(l => l.id === liftId);
+            if (lift && lift.clientEmail) {
+                const subject = encodeURIComponent(`Статус ліфта ${lift.id} на ${lift.address}`);
+                const body = encodeURIComponent(
+                    `Шановний клієнт,\n\n` +
+                    `Інформуємо вас про статус ліфта ${lift.id}:\n` +
+                    `Адреса: ${lift.address}\n` +
+                    `Тип: ${lift.type || 'Не вказано'}\n` +
+                    `Марка: ${lift.brand || 'Не вказано'}\n` +
+                    `Статус: ${lift.status}\n` +
+                    `Останнє ТО: ${formatDate(lift.lastMaintenance)}\n\n` +
+                    `З повагою,\nLiftMaster Pro`
+                );
+                window.location.href = `mailto:${lift.clientEmail}?subject=${subject}&body=${body}`;
+            } else {
+                alert('Email клієнта не вказано.');
+            }
+        }
+
+        function filterLiftsData() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            return lifts.filter(lift => {
+                const matchesSearch = lift.id.toLowerCase().includes(searchInput) || lift.address.toLowerCase().includes(searchInput);
+                const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' && lift.status === 'Активний') || (statusFilter === 'broken' && lift.status === 'Поломка');
+                return matchesSearch && matchesStatus;
+            });
+        }
+
+        function sortLifts(lifts) {
+            if (sortColumn === -1) return lifts;
+            return [...lifts].sort((a, b) => {
+                const values = [a, b].map(lift => {
+                    switch (sortColumn) {
+                        case 0: return lift.id;
+                        case 1: return lift.address;
+                        case 2: return lift.status;
+                        case 3: return lift.lastMaintenance || '';
+                    }
+                });
+                return values[0] > values[1] ? sortDirection : -sortDirection;
+            });
+        }
+
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortColumn = column;
+                sortDirection = 1;
+            }
+            displayLifts();
+        }
+
+        function filterLifts() {
+            currentPage = 1;
+            displayLifts();
+        }
+
+        function updatePagination(totalLifts) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            const totalPages = Math.ceil(totalLifts / liftsPerPage);
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.onclick = () => {
+                    currentPage = i;
+                    displayLifts();
+                };
+                if (i === currentPage) {
+                    button.style.backgroundColor = '#007bff';
+                }
+                pagination.appendChild(button);
+            }
+        }
+
+        function updateStats() {
+            const activeLifts = lifts.filter(lift => lift.status === 'Активний').length;
+            document.getElementById('activeLifts').textContent = activeLifts;
+            document.getElementById('todayIssues').textContent = lifts.filter(lift => lift.status === 'Поломка').length;
+        }
+
+        function viewLiftDetails(liftId) {
+            console.log('Переданий liftId:', liftId);
+            localStorage.setItem('selectedLiftId', liftId.toString());
+            window.location.href = 'lift-details.html';
+        }
+
+        function submitNewIssue() {
+            const liftId = document.getElementById('newLiftId').value;
+            const description = document.getElementById('newDescription').value;
+            const priority = document.getElementById('newPriority').value;
+
+            if (liftId && description) {
+                alert(`Заявка зареєстрована: Ліфт ${liftId}, Опис: ${description}, Пріоритет: ${priority}`);
+            } else {
+                alert('Будь ласка, заповніть усі поля.');
+            }
+        }
+
+        function exportToCSV() {
+            const filteredLifts = filterLiftsData();
+            const csv = ['ID,Адреса,Статус,Останнє ТО'].concat(
+                filteredLifts.map(lift => `${lift.id},${lift.address},${lift.status},${formatDate(lift.lastMaintenance)}`)
+            ).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lifts.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function checkUrgentIssues() {
+            const hasUrgentIssues = lifts.some(lift => lift.status === 'Поломка');
+            if (settings.notifications.urgent) {
+                document.getElementById('urgentNotification').style.display = hasUrgentIssues ? 'block' : 'none';
+            } else {
+                document.getElementById('urgentNotification').style.display = 'none';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        // Ініціалізація
+        setupRoleAccess();
+        applyTheme();
+        displayLifts();
+        changeLanguage();
+    </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LiftMaster Pro - Дашборд</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/leaflet/dist/leaflet.css" rel="stylesheet">
+  <style>
+    body { background-color: #f4f6f9; }
+    .sidebar { height: 100vh; background: #1f2d3d; color: white; padding-top: 1rem; }
+    .sidebar a { color: white; display: block; padding: 0.75rem 1rem; text-decoration: none; }
+    .sidebar a:hover { background: #2c3e50; }
+    .card { border-radius: 1rem; }
+    #map { height: 300px; width: 100%; border-radius: 1rem; margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar">
+      <h4 class="text-center">LiftMaster Pro</h4>
+      <a href="#">Ліфти</a>
+      <a href="#">Завдання</a>
+      <a href="#">Клієнти</a>
+      <a href="#">Аналітика</a>
+      <a href="#">PDF звіти</a>
+      <a href="#">Налаштування</a>
+    </div>
+
+    <!-- Main dashboard -->
+    <div class="col-md-10 p-4">
+      <h2>Головна панель</h2>
+
+      <!-- Карта -->
+      <div id="map"></div>
+
+      <!-- Картки з даними -->
+      <div class="row my-4">
+        <div class="col-md-4">
+          <div class="card text-bg-success p-3">
+            <h5>Активні ліфти</h5>
+            <p class="fs-3">125</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-bg-warning p-3">
+            <h5>Завдання на сьогодні</h5>
+            <p class="fs-3">8</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-bg-info p-3">
+            <h5>Сер. час реакції</h5>
+            <p class="fs-3">2 год</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Фільтр пошуку -->
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" placeholder="Пошук за адресою або ID ліфта" id="searchInput">
+        <button class="btn btn-outline-secondary" type="button" onclick="filterTable()">Пошук</button>
+      </div>
+
+      <!-- Таблиця ліфтів -->
+      <div class="card p-3">
+        <h5>Ліфти</h5>
+        <table class="table table-striped" id="liftTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Адреса</th>
+              <th>Статус</th>
+              <th>Останнє ТО</th>
+              <th>Фото</th>
+              <th>Дія</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>34</td>
+              <td>вул. Шевченка, 10</td>
+              <td><span class="badge bg-danger">Проблема</span></td>
+              <td>2025-03-01</td>
+              <td><input type="file" accept="image/*"></td>
+              <td><button class="btn btn-sm btn-primary">Деталі</button></td>
+            </tr>
+            <tr>
+              <td>78</td>
+              <td>вул. Франка, 22</td>
+              <td><span class="badge bg-success">OK</span></td>
+              <td>2025-03-28</td>
+              <td><input type="file" accept="image/*"></td>
+              <td><button class="btn btn-sm btn-primary">Деталі</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Форма заявки -->
+      <div class="card p-3 my-4">
+        <h5>Подати заявку</h5>
+        <form>
+          <div class="mb-2">
+            <input type="text" class="form-control" placeholder="Адреса ліфта">
+          </div>
+          <div class="mb-2">
+            <textarea class="form-control" rows="2" placeholder="Опис проблеми"></textarea>
+          </div>
+          <div class="mb-2">
+            <input type="file" class="form-control" accept="image/*,video/*">
+          </div>
+          <button type="submit" class="btn btn-success">Надіслати</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([49.8397, 24.0297], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: 'Map data © OpenStreetMap contributors'
+  }).addTo(map);
+  L.marker([49.8397, 24.0297]).addTo(map).bindPopup('Ліфт №34 - Проблема');
+  L.marker([49.845, 24.03]).addTo(map).bindPopup('Ліфт №78 - OK');
+
+  function filterTable() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#liftTable tbody tr');
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(input) ? '' : 'none';
+    });
+  }
+</script>
+</body>
+</html>
